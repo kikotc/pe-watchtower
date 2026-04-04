@@ -32,3 +32,9 @@ Thumbs.db
 
 # Judging (not visible to participants)
 judging/
+
+# PDF
+*.pdf
+
+# Seed data
+seed_data/
