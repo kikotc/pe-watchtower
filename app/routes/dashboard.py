@@ -79,3 +79,62 @@ def history():
         pass
     from flask import jsonify
     return jsonify(entries[-10_000:])
+
+
+def _read_log_file():
+    """Read and parse every line of the log file. Returns list of dicts."""
+    log_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "logs", "app.log")
+    )
+    entries = []
+    try:
+        with open(log_path) as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        entries.append(json.loads(line))
+                    except json.JSONDecodeError:
+                        pass
+    except FileNotFoundError:
+        pass
+    return entries
+
+
+@dashboard_bp.route("/dashboard/slo")
+@_login_required
+def slo():
+    """Compute SLO uptime % from the full log file."""
+    from flask import jsonify
+    entries = _read_log_file()
+    reqs    = [e for e in entries if e.get("method") and e.get("status")]
+    total   = len(reqs)
+    errors  = sum(1 for r in reqs if r.get("status", 0) >= 500)
+    uptime  = round((total - errors) / total * 100, 3) if total else 100.0
+    target  = 99.9
+    budget_total    = round(100 - target, 3)
+    budget_consumed = round((100 - uptime) / budget_total * 100, 1) if budget_total else 0
+    return jsonify({
+        "uptime_pct":       uptime,
+        "slo_target":       target,
+        "slo_met":          uptime >= target,
+        "total_requests":   total,
+        "error_requests":   errors,
+        "budget_consumed":  min(budget_consumed, 999),
+    })
+
+
+@dashboard_bp.route("/dashboard/incidents")
+@_login_required
+def incidents():
+    """Return alert-fired entries from the log file as incident records."""
+    from flask import jsonify
+    entries = _read_log_file()
+    fired   = [e for e in entries if "Alert fired" in e.get("message", "")]
+    return jsonify(fired[-20:])
+
+
+@dashboard_bp.route("/dashboard/runbook")
+@_login_required
+def runbook():
+    return render_template("runbook.html")

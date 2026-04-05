@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Watchtower — Runbook</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080d18; --surface: #0f1629; --border: #1e2d4a; --border2: #243350;
+      --blue: #3b82f6; --green: #10b981; --yellow: #f59e0b; --red: #ef4444;
+      --text: #e2e8f0; --muted: #64748b; --faint: #94a3b8;
+    }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 16px; line-height: 1.6; }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 32px; height: 62px;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .logo-title   { font-size: 17px; font-weight: 700; color: #f1f5f9; }
+    .logo-badge   { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--yellow); background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); border-radius: 4px; padding: 3px 8px; }
+    .btn-back { font-size: 13px; font-weight: 500; color: var(--muted); text-decoration: none; border: 1px solid var(--border2); border-radius: 6px; padding: 6px 14px; transition: color 0.2s, border-color 0.2s; }
+    .btn-back:hover { color: var(--text); border-color: var(--faint); }
+
+    main { max-width: 860px; margin: 0 auto; padding: 36px 32px 60px; }
+
+    .page-title { font-size: 30px; font-weight: 700; color: #f1f5f9; margin-bottom: 6px; }
+    .page-sub   { font-size: 15px; color: var(--muted); margin-bottom: 36px; }
+
+    .toc { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin-bottom: 36px; }
+    .toc-title { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+    .toc ol { padding-left: 18px; }
+    .toc li  { margin-bottom: 6px; }
+    .toc a   { color: var(--blue); text-decoration: none; font-size: 14px; }
+    .toc a:hover { text-decoration: underline; }
+
+    .section { margin-bottom: 40px; }
+    .section-anchor { display: block; height: 80px; margin-top: -80px; visibility: hidden; }
+
+    .alert-card { border-radius: 12px; border: 1px solid; padding: 24px 28px; margin-bottom: 24px; }
+    .alert-card.red    { border-color: rgba(239,68,68,0.35);  background: rgba(239,68,68,0.05); }
+    .alert-card.yellow { border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.05); }
+
+    .alert-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .alert-icon   { font-size: 22px; }
+    .alert-title  { font-size: 20px; font-weight: 700; color: #f1f5f9; }
+    .alert-badge  { font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; border-radius: 4px; padding: 3px 9px; }
+    .badge-red    { color: var(--red);    background: rgba(239,68,68,0.15);  border: 1px solid rgba(239,68,68,0.3); }
+    .badge-yellow { color: var(--yellow); background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); }
+
+    .steps { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+    .step  { display: flex; gap: 14px; align-items: flex-start; }
+    .step-num { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+    .num-red    { background: rgba(239,68,68,0.2);  color: var(--red); }
+    .num-yellow { background: rgba(245,158,11,0.2); color: var(--yellow); }
+    .num-blue   { background: rgba(59,130,246,0.2); color: var(--blue); }
+    .step-body  { flex: 1; }
+    .step-body strong { color: #f1f5f9; display: block; margin-bottom: 3px; }
+    .step-body p, .step-body code { font-size: 14px; color: var(--faint); }
+
+    code {
+      font-family: "SF Mono","Fira Code","Menlo",monospace;
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border2);
+      border-radius: 5px; padding: 2px 7px; font-size: 13px; color: #c4d4f0;
+    }
+    pre {
+      background: #050810; border: 1px solid var(--border2); border-radius: 8px;
+      padding: 16px 20px; font-family: "SF Mono","Fira Code",monospace;
+      font-size: 13px; color: #c4d4f0; overflow-x: auto; margin: 12px 0;
+      line-height: 1.6;
+    }
+
+    h2 { font-size: 20px; font-weight: 600; color: #f1f5f9; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+    p  { color: var(--faint); font-size: 15px; margin-bottom: 12px; }
+
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+    .info-cell { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+    .info-cell .label { font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+    .info-cell .val   { font-size: 14px; color: var(--faint); font-family: "SF Mono", monospace; }
+
+    .updated { font-size: 12px; color: var(--muted); margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <span style="font-size:20px">🛡</span>
+      <div class="logo-title">Watchtower</div>
+      <div class="logo-badge">Runbook</div>
+    </div>
+    <a href="/dashboard" class="btn-back">← Dashboard</a>
+  </header>
+
+  <main>
+    <div class="page-title">Incident Runbook</div>
+    <div class="page-sub">Step-by-step response guides for on-call engineers. If you are reading this at 3 AM, take a breath — you've got this.</div>
+
+    <!-- TABLE OF CONTENTS -->
+    <div class="toc">
+      <div class="toc-title">Contents</div>
+      <ol>
+        <li><a href="#service-down">Alert: Service Down</a></li>
+        <li><a href="#high-error-rate">Alert: High Error Rate</a></li>
+        <li><a href="#debugging">General Debugging Steps</a></li>
+        <li><a href="#restart">Restarting the Service</a></li>
+        <li><a href="#key-endpoints">Key Endpoints Reference</a></li>
+      </ol>
+    </div>
+
+    <!-- SERVICE DOWN -->
+    <div class="section">
+      <span class="section-anchor" id="service-down"></span>
+      <div class="alert-card red">
+        <div class="alert-header">
+          <span class="alert-icon">🔴</span>
+          <span class="alert-title">Alert: Service Down</span>
+          <span class="alert-badge badge-red">Critical</span>
+        </div>
+        <p>Triggered when <code>GET /health</code> returns non-200 or times out. Fires to Discord within 30 seconds.</p>
+        <ol class="steps">
+          <li class="step">
+            <div class="step-num num-red">1</div>
+            <div class="step-body">
+              <strong>Check the dashboard health banner</strong>
+              <p>Go to <code>/dashboard</code>. If the banner is red, the service cannot reach itself. If it's green, the alert may have been transient.</p>
+            </div>
+          </li>
+          <li class="step">
+            <div class="step-num num-red">2</div>
+            <div class="step-body">
+              <strong>Check if the process is running</strong>
+              <pre>ps aux | grep run.py
+# or if using Docker:
+docker ps</pre>
+            </div>
+          </li>
+          <li class="step">
+            <div class="step-num num-red">3</div>
+            <div class="step-body">
+              <strong>Check the logs for the crash reason</strong>
+              <p>Go to <code>/dashboard</code> → Live Log Feed, or read the file directly:</p>
+              <pre>tail -50 logs/app.log</pre>
+              <p>Look for <code>ERROR</code> or <code>Exception</code> entries just before the service went silent.</p>
+            </div>
+          </li>
+          <li class="step">
+            <div class="step-num num-red">4</div>
+            <div class="step-body">
+              <strong>Check if the database is reachable</strong>
+              <pre>docker ps | grep postgres
+# if container is stopped:
+docker start watchtower-db</pre>
+            </div>
+          </li>
+          <li class="step">
+            <div class="step-num num-red">5</div>
+            <div class="step-body">
+              <strong>Restart the service</strong>
+              <p>See the <a href="#restart" style="color:var(--blue)">Restart section</a> below.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- HIGH ERROR RATE -->
+    <div class="section">
+      <span class="section-anchor" id="high-error-rate"></span>
+      <div class="alert-card yellow">
+        <div class="alert-header">
+          <span class="alert-icon">⚠️</span>
+          <span class="alert-title">Alert: High Error Rate</span>
+          <span class="alert-badge badge-yellow">Warning</span>
+        </div>
+        <p>Triggered when ≥50% of requests in a 2-minute window return 5xx. Fires to Discord with counts.</p>
+        <ol class="steps">
+          <li class="step">
+            <div class="step-num num-yellow">1</div>
+            <div class="step-body">
+              <strong>Check the Error Rate card on the dashboard</strong>
+              <p>Go to <code>/dashboard</code>. The Error Rate card will be red if it's still elevated. Check the Error Rate History chart to see when it started.</p>
+            </div>
+          </li>
+          <li class="step">
+            <div class="step-num num-yellow">2</div>
+            <div class="step-body">
+              <strong>Find the failing requests in the log feed</strong>
+              <p>Filter the Live Log Feed for <code>ERROR</code> and <code>5xx</code> entries. Note which paths are failing.</p>
+            </div>
+          </li>
+          <li class="step">
+            <div class="step-num num-yellow">3</div>
+            <div class="step-body">
+              <strong>Check for a bad deployment or recent code change</strong>
+              <pre>git log --oneline -10</pre>
+              <p>If a recent commit introduced the errors, roll back:</p>
+              <pre>git revert HEAD
+python3 run.py</pre>
+            </div>
+          </li>
+          <li class="step">
+            <div class="step-num num-yellow">4</div>
+            <div class="step-body">
+              <strong>Check database connectivity</strong>
+              <p>Most 5xx errors are database failures. Confirm the DB is up and the tables exist:</p>
+              <pre>docker ps | grep postgres</pre>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- GENERAL DEBUGGING -->
+    <div class="section">
+      <span class="section-anchor" id="debugging"></span>
+      <h2>General Debugging Steps</h2>
+      <ol class="steps">
+        <li class="step">
+          <div class="step-num num-blue">1</div>
+          <div class="step-body">
+            <strong>Look at structured logs</strong>
+            <p>The dashboard <code>/logs</code> endpoint returns the last 200 log entries. The log file at <code>logs/app.log</code> has full history. Every request is logged with method, path, status, and duration.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num num-blue">2</div>
+          <div class="step-body">
+            <strong>Check system metrics</strong>
+            <p>Hit <code>/metrics</code> or check the dashboard rings. High CPU (>90%) or RAM (>90%) can cause slow responses and timeouts.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num num-blue">3</div>
+          <div class="step-body">
+            <strong>Check the Top Endpoints panel</strong>
+            <p>Is one path getting hammered abnormally? That could indicate a stuck client, a loop, or a DDoS.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num num-blue">4</div>
+          <div class="step-body">
+            <strong>Check recent events</strong>
+            <p>The <code>/events</code> endpoint shows the last 100 data-mutation events. Unexpected deletions or mass-creates can surface here.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <!-- RESTART -->
+    <div class="section">
+      <span class="section-anchor" id="restart"></span>
+      <h2>Restarting the Service</h2>
+      <p>Stop the running process (Ctrl+C or kill the PID), then:</p>
+      <pre>cd /path/to/pe-watchtower
+python3 run.py</pre>
+      <p>If using Docker Compose:</p>
+      <pre>docker compose restart app</pre>
+      <p>Confirm recovery by hitting <code>/health</code> — it should return <code>{"status": "ok"}</code> within a few seconds.</p>
+    </div>
+
+    <!-- KEY ENDPOINTS -->
+    <div class="section">
+      <span class="section-anchor" id="key-endpoints"></span>
+      <h2>Key Endpoints Reference</h2>
+      <div class="info-grid">
+        <div class="info-cell"><div class="label">Health Check</div><div class="val">GET /health</div></div>
+        <div class="info-cell"><div class="label">System Metrics</div><div class="val">GET /metrics</div></div>
+        <div class="info-cell"><div class="label">Structured Logs</div><div class="val">GET /logs</div></div>
+        <div class="info-cell"><div class="label">Event History</div><div class="val">GET /events</div></div>
+        <div class="info-cell"><div class="label">Admin Dashboard</div><div class="val">GET /dashboard</div></div>
+        <div class="info-cell"><div class="label">SLO Status</div><div class="val">GET /dashboard/slo</div></div>
+        <div class="info-cell"><div class="label">Incident Log</div><div class="val">GET /dashboard/incidents</div></div>
+        <div class="info-cell"><div class="label">Log File History</div><div class="val">GET /dashboard/history</div></div>
+      </div>
+    </div>
+
+    <div class="updated">Last updated: April 2026 · Watchtower PE Hackathon</div>
+  </main>
+
+</body>
+</html>
