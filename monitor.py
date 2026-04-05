@@ -2,7 +2,6 @@
 Standalone alerting monitor — run this in a separate terminal alongside the Flask app.
 It watches /health and /logs and fires Discord alerts independently of the app process.
 """
-import json
 import logging
 import os
 import time
@@ -13,7 +12,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-CHECK_INTERVAL = 30
+CHECK_INTERVAL = 15
 STARTUP_DELAY = 3
 ALERT_COOLDOWN = 300
 ERROR_RATE_THRESHOLD = 0.5
@@ -29,26 +28,24 @@ logging.basicConfig(
 logger = logging.getLogger("monitor")
 
 
-def send_discord(message: str) -> None:
+def send_discord(embed: dict) -> None:
     webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
     if not webhook_url:
         logger.warning("DISCORD_WEBHOOK_URL not set")
         return
 
     role_id = os.environ.get("DISCORD_ALERT_ROLE_ID")
-    if role_id:
-        content = f"<@&{role_id}> {message}"
-        allowed_mentions = {"roles": [role_id]}
-    else:
-        content = message
-        allowed_mentions = {"parse": []}
+    content = f"<@&{role_id}>" if role_id else ""
+    allowed_mentions = {"roles": [role_id]} if role_id else {"parse": []}
+
+    payload = {
+        "content": content,
+        "allowed_mentions": allowed_mentions,
+        "embeds": [embed],
+    }
 
     try:
-        resp = requests.post(
-            webhook_url,
-            json={"content": content, "allowed_mentions": allowed_mentions},
-            timeout=5,
-        )
+        resp = requests.post(webhook_url, json=payload, timeout=5)
         if resp.status_code not in (200, 204):
             logger.warning("Discord webhook returned %s", resp.status_code)
         else:
@@ -77,11 +74,19 @@ def check_service_down() -> None:
         status = str(exc)
 
     if should_alert("service_down"):
-        ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-        send_discord(
-            f":red_circle: **[{ts}] SERVICE DOWN**\n"
-            f"Health check failed — `{health_url}`\nReason: `{status}`"
-        )
+        send_discord({
+            "title": "🔴  Service Down",
+            "description": "The health check has failed. Immediate attention required.",
+            "color": 0xE74C3C,  # red
+            "fields": [
+                {"name": "Endpoint", "value": f"`{health_url}`", "inline": True},
+                {"name": "Reason", "value": "Connection refused", "inline": True},
+                {"name": "Full Error", "value": f"||`{status}`||", "inline": False},
+                {"name": "Next check in", "value": f"`{CHECK_INTERVAL}s`", "inline": True},
+            ],
+            "footer": {"text": "Watchtower Alerting"},
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        })
         logger.error("Alert fired: service_down — %s", status)
 
 
@@ -113,12 +118,18 @@ def check_error_rate() -> None:
 
     if rate >= ERROR_RATE_THRESHOLD:
         if should_alert("high_error_rate"):
-            ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-            send_discord(
-                f":warning: **[{ts}] HIGH ERROR RATE**\n"
-                f"{len(errors)}/{len(recent)} requests in the last {ERROR_RATE_WINDOW}s "
-                f"returned 5xx ({rate:.0%})"
-            )
+            send_discord({
+                "title": "⚠️  High Error Rate Detected",
+                "description": f"More than {ERROR_RATE_THRESHOLD:.0%} of recent requests returned a 5xx error.",
+                "color": 0xE67E22,  # orange
+                "fields": [
+                    {"name": "Error Rate", "value": f"`{rate:.0%}`", "inline": True},
+                    {"name": "Failed Requests", "value": f"`{len(errors)} / {len(recent)}`", "inline": True},
+                    {"name": "Window", "value": f"`{ERROR_RATE_WINDOW}s`", "inline": True},
+                ],
+                "footer": {"text": "Watchtower Alerting"},
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            })
             logger.error("Alert fired: high_error_rate — %.0f%%", rate * 100)
     else:
         _last_alert.pop("high_error_rate", None)
