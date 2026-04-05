@@ -108,14 +108,17 @@ def get_user(user_id):
 @users_bp.route("", methods=["POST"])
 def create_user():
     data = request.get_json(silent=True)
-    if not data:
-        return jsonify({"error": "Request body must be JSON"}), 400
+    if not data or not isinstance(data, dict):
+        return jsonify({"error": "Request body must be a JSON object"}), 400
 
     username = data.get("username")
     email = data.get("email")
 
     if not username or not email:
         return jsonify({"error": "username and email are required"}), 400
+
+    if not isinstance(username, str) or not isinstance(email, str):
+        return jsonify({"error": "username and email must be strings"}), 400
 
     try:
         from datetime import datetime, timezone
@@ -143,8 +146,13 @@ def update_user(user_id):
         return jsonify({"error": "User not found"}), 404
 
     data = request.get_json(silent=True)
-    if not data:
-        return jsonify({"error": "Request body must be JSON"}), 400
+    if not data or not isinstance(data, dict):
+        return jsonify({"error": "Request body must be a JSON object"}), 400
+
+    if "username" in data and not isinstance(data["username"], str):
+        return jsonify({"error": "username must be a string"}), 400
+    if "email" in data and not isinstance(data["email"], str):
+        return jsonify({"error": "email must be a string"}), 400
 
     try:
         if "username" in data:
@@ -170,6 +178,33 @@ def delete_user(user_id):
         return jsonify({"error": "User not found"}), 404
     user.delete_instance(recursive=True)
     return jsonify({"message": "User deleted"}), 200
+
+
+@users_bp.route("/<int:user_id>/events", methods=["GET"])
+def get_user_events(user_id):
+    user = User.get_or_none(User.id == user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    import json as _json
+    events = Event.select().where(Event.user == user_id).order_by(Event.timestamp.desc())
+    results = []
+    for e in events:
+        details = e.details
+        if isinstance(details, str):
+            try:
+                details = _json.loads(details)
+            except (_json.JSONDecodeError, TypeError):
+                pass
+        results.append({
+            "id": e.id,
+            "url_id": e.url_id,
+            "user_id": e.user_id,
+            "event_type": e.event_type,
+            "timestamp": e.timestamp.isoformat() if e.timestamp else None,
+            "details": details,
+        })
+    return jsonify(results)
 
 
 @users_bp.route("/<int:user_id>/urls", methods=["GET"])

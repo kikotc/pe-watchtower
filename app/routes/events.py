@@ -35,8 +35,8 @@ def _event_to_dict(e):
 def list_or_create_events():
     if request.method == "POST":
         data = request.get_json(silent=True)
-        if not data:
-            return jsonify({"error": "Request body must be JSON"}), 400
+        if not data or not isinstance(data, dict):
+            return jsonify({"error": "Request body must be a JSON object"}), 400
 
         url_id = data.get("url_id")
         user_id = data.get("user_id")
@@ -45,9 +45,13 @@ def list_or_create_events():
         if not event_type:
             return jsonify({"error": "event_type is required"}), 400
 
+        if not isinstance(event_type, str):
+            return jsonify({"error": "event_type must be a string"}), 400
+
         details = data.get("details", {})
-        if isinstance(details, dict):
-            details = json.dumps(details)
+        if not isinstance(details, dict):
+            return jsonify({"error": "details must be a JSON object"}), 400
+        details = json.dumps(details)
 
         event = Event.create(
             url=url_id,
@@ -73,7 +77,9 @@ def list_or_create_events():
     if event_type is not None:
         query = query.where(Event.event_type == event_type)
 
-    return jsonify([_event_to_dict(e) for e in query.limit(100)])
+    limit = request.args.get("limit", 100, type=int)
+    offset = request.args.get("offset", 0, type=int)
+    return jsonify([_event_to_dict(e) for e in query.offset(offset).limit(limit)])
 
 
 @events_bp.route("/<int:event_id>", methods=["GET"])
