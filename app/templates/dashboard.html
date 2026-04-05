@@ -59,6 +59,13 @@
       transition: color 0.2s, border-color 0.2s;
     }
     .btn-logout:hover { color: var(--text); border-color: var(--faint); }
+    .btn-runbook {
+      font-size: 13px; font-weight: 500; color: var(--yellow); text-decoration: none;
+      border: 1px solid rgba(245,158,11,0.3); border-radius: 6px; padding: 6px 14px;
+      background: rgba(245,158,11,0.07);
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+    .btn-runbook:hover { background: rgba(245,158,11,0.14); border-color: var(--yellow); }
 
     /* ── LAYOUT ── */
     main {
@@ -247,6 +254,31 @@
     .chart-svg     { width: 100%; height: 80px; display: block; }
     .chart-axis    { display: flex; justify-content: space-between; padding: 4px 18px 12px; font-size: 11px; color: var(--muted); }
 
+    /* ── SLO WIDGET ── */
+    .slo-card { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; }
+    .slo-main { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 22px 20px; border-right: 1px solid var(--border); gap: 6px; }
+    .slo-pct  { font-size: 42px; font-weight: 700; line-height: 1; transition: color 0.4s; }
+    .slo-lbl  { font-size: 12px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); }
+    .slo-stat { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; padding: 18px 14px; border-right: 1px solid var(--border); }
+    .slo-stat:last-child { border-right: none; }
+    .slo-stat-val { font-size: 22px; font-weight: 700; color: #f1f5f9; }
+    .slo-stat-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
+    .slo-met-yes  { color: var(--green); }
+    .slo-met-no   { color: var(--red); }
+    .slo-budget-ok   { color: var(--green); }
+    .slo-budget-warn { color: var(--yellow); }
+    .slo-budget-crit { color: var(--red); }
+
+    /* ── INCIDENTS ── */
+    .incident-row {
+      display: grid; grid-template-columns: 88px 1fr;
+      gap: 12px; align-items: start;
+      padding: 10px 20px; border-bottom: 1px solid rgba(30,45,74,0.4);
+    }
+    .incident-row:last-child { border-bottom: none; }
+    .incident-time { font-family: "SF Mono","Fira Code",monospace; font-size: 12px; color: var(--muted); padding-top: 1px; }
+    .incident-msg  { font-size: 13px; color: var(--faint); line-height: 1.4; }
+
     /* ── CHART Y-AXIS ── */
     .chart-body  { display: flex; align-items: stretch; }
     .y-axis      { display: flex; flex-direction: column; justify-content: space-between; padding: 8px 5px 8px 16px; font-size: 10px; color: var(--muted); text-align: right; min-width: 34px; font-family: "SF Mono","Fira Code",monospace; flex-shrink: 0; }
@@ -277,6 +309,7 @@
     </div>
     <div class="header-right">
       <span id="last-updated">Loading…</span>
+      <a href="/dashboard/runbook" class="btn-runbook">📖 Runbook</a>
       <a href="/dashboard/logout" class="btn-logout">Sign out</a>
     </div>
   </header>
@@ -376,6 +409,44 @@
           <div class="stat-lbl">Recent Events</div>
         </div>
       </div>
+    </div>
+
+    <!-- SLO + INCIDENTS -->
+    <div class="grid-2-l">
+
+      <!-- SLO UPTIME WIDGET -->
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="panel-header">
+          <span class="section-title">SLO Uptime</span>
+          <span class="section-badge" id="slo-status-badge">—</span>
+        </div>
+        <div class="slo-card">
+          <div class="slo-main">
+            <div class="slo-pct slo-met-yes" id="slo-pct">—%</div>
+            <div class="slo-lbl">Uptime</div>
+          </div>
+          <div class="slo-stat">
+            <div class="slo-stat-val" id="slo-budget">—%</div>
+            <div class="slo-stat-lbl">Budget Used</div>
+          </div>
+          <div class="slo-stat">
+            <div class="slo-stat-val" id="slo-errors">—</div>
+            <div class="slo-stat-lbl">Error Reqs</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INCIDENT HISTORY -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <span class="section-title">Incident History</span>
+          <span class="section-badge">Last 20</span>
+        </div>
+        <div id="incident-list" style="max-height:180px;overflow-y:auto;">
+          <div class="empty-state">Loading…</div>
+        </div>
+      </div>
+
     </div>
 
     <!-- HISTORICAL GRAPHS -->
@@ -944,6 +1015,56 @@
       }).join("");
     }
 
+    // ── /dashboard/slo ───────────────────────────────────────────────────────
+
+    async function pollSLO() {
+      const data = await safeFetch("/dashboard/slo");
+      if (!data) return;
+
+      const pct     = data.uptime_pct ?? 100;
+      const met     = data.slo_met;
+      const budget  = data.budget_consumed ?? 0;
+      const errors  = data.error_requests ?? 0;
+
+      const pctEl = document.getElementById("slo-pct");
+      pctEl.textContent = pct.toFixed(3) + "%";
+      pctEl.className   = "slo-pct " + (met ? "slo-met-yes" : "slo-met-no");
+
+      const badge = document.getElementById("slo-status-badge");
+      badge.textContent = met ? "✓ Met" : "✗ Breached";
+      badge.style.color = met ? "var(--green)" : "var(--red)";
+
+      const budgetEl = document.getElementById("slo-budget");
+      budgetEl.textContent = budget.toFixed(1) + "%";
+      budgetEl.className = "slo-stat-val " +
+        (budget < 50 ? "slo-budget-ok" : budget < 90 ? "slo-budget-warn" : "slo-budget-crit");
+
+      document.getElementById("slo-errors").textContent = errors.toLocaleString();
+    }
+
+    // ── /dashboard/incidents ─────────────────────────────────────────────────
+
+    async function pollIncidents() {
+      const data = await safeFetch("/dashboard/incidents");
+      const list = document.getElementById("incident-list");
+      if (!data) {
+        list.innerHTML = '<div class="empty-state" style="color:var(--red)">Failed to load.</div>';
+        return;
+      }
+      if (!data.length) {
+        list.innerHTML = '<div class="empty-state">No incidents recorded.</div>';
+        return;
+      }
+      list.innerHTML = [...data].reverse().map(e => {
+        const time = e.timestamp ? fmtTime(e.timestamp) : "—";
+        const msg  = e.message || "Alert fired";
+        return `<div class="incident-row">
+          <span class="incident-time">${time}</span>
+          <span class="incident-msg">${msg}</span>
+        </div>`;
+      }).join("");
+    }
+
     // ── polling ───────────────────────────────────────────────────────────────
 
     function updateTimestamp() {
@@ -958,9 +1079,13 @@
 
     fastPoll();
     pollAppData();
+    pollSLO();
+    pollIncidents();
     initFromHistory();
-    setInterval(fastPoll,    5000);
-    setInterval(pollAppData, 15000);
+    setInterval(fastPoll,       5000);
+    setInterval(pollAppData,   15000);
+    setInterval(pollSLO,       30000);
+    setInterval(pollIncidents, 30000);
   </script>
 </body>
 </html>

@@ -6,6 +6,7 @@ import logging
 import os
 import time
 from datetime import datetime, timezone
+from typing import Optional
 
 import requests
 from dotenv import load_dotenv
@@ -20,12 +21,12 @@ ERROR_RATE_WINDOW = 120
 BASE_URL = "http://localhost:5001"
 
 _last_alert: dict[str, float] = {}
-_down_since: float | None = None  # timestamp when service went down
+_down_since: Optional[float] = None  # timestamp when service went down
 _INCIDENTS_URL = f"http://localhost:5001/incidents/record"
 
 
-def _record_incident(incident_type: str, started_at: str, resolved_at: str | None = None,
-                     duration_seconds: float | None = None, details: str = "") -> None:
+def _record_incident(incident_type: str, started_at: str, resolved_at: Optional[str] = None,
+                     duration_seconds: Optional[float] = None, details: str = "") -> None:
     try:
         requests.post(_INCIDENTS_URL, json={
             "type": incident_type,
