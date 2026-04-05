@@ -1,4 +1,7 @@
+import csv
+import io
 import json
+import os
 import string
 import random
 from datetime import datetime, timezone
@@ -11,6 +14,8 @@ from app.models.user import User
 from app.models.event import Event
 
 urls_bp = Blueprint("urls", __name__)
+
+_SEED_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "seed_data")
 
 
 def _generate_short_code(length=6):
@@ -216,4 +221,81 @@ def redirect_short(short_code):
         return jsonify({"error": "Short URL not found"}), 404
     if not url.is_active:
         return jsonify({"error": "This short URL is no longer active"}), 410
+
+    # Record click event
+    Event.create(
+        url=url.id,
+        user=url.user_id,
+        event_type="click",
+        timestamp=datetime.now(timezone.utc),
+        details=json.dumps({
+            "referrer": request.headers.get("Referer", ""),
+            "user_agent": request.headers.get("User-Agent", ""),
+        }),
+    )
+
     return redirect(url.original_url, code=302)
+
+
+@urls_bp.route("/urls/bulk", methods=["POST"])
+def bulk_load_urls():
+    data = request.get_json(silent=True)
+    if data and "file" in data:
+        filename = data["file"]
+        filepath = os.path.join(_SEED_DIR, os.path.basename(filename))
+        if not os.path.exists(filepath):
+            return jsonify({"error": f"File not found: {filename}"}), 404
+        with open(filepath, newline="") as f:
+            reader = csv.DictReader(f)
+            rows = list(reader)
+    elif "file" in request.files:
+        f = request.files["file"]
+        stream = io.StringIO(f.stream.read().decode("utf-8"))
+        reader = csv.DictReader(stream)
+        rows = list(reader)
+        filename = f.filename
+    else:
+        return jsonify({"error": "No file provided"}), 400
+
+    created = 0
+    errors = []
+    now = datetime.now(timezone.utc)
+
+    for i, row in enumerate(rows, start=1):
+        original_url = row.get("original_url", "").strip()
+        short_code = row.get("short_code", "").strip() or _generate_short_code()
+        title = row.get("title", "").strip()
+        user_id = row.get("user_id") or row.get("user") or None
+        is_active = row.get("is_active", "true").strip().lower() in ("true", "1", "t", "yes")
+
+        if not original_url:
+            errors.append({"row": i, "error": "missing original_url"})
+            continue
+        try:
+            if user_id:
+                user_id = int(user_id)
+        except (ValueError, TypeError):
+            user_id = None
+
+        try:
+            Url.create(
+                user=user_id,
+                short_code=short_code,
+                original_url=original_url,
+                title=title,
+                is_active=is_active,
+                created_at=now,
+                updated_at=now,
+            )
+            created += 1
+        except IntegrityError:
+            errors.append({"row": i, "error": f"duplicate short_code: {short_code}"})
+
+    return jsonify({
+        "file": filename,
+        "row_count": created,
+        "imported": created,
+        "created": created,
+        "errors": errors,
+        "message": f"Successfully imported {created} URLs",
+    }), 201
