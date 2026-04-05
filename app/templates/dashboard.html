@@ -1717,12 +1717,12 @@
     pollFailures();
     pollErrorClassification();
     initFromHistory();
-    setInterval(fastPoll,                5000);
-    setInterval(pollAppData,             5000);
-    setInterval(pollSLO,                 5000);
-    setInterval(pollIncidents,           5000);
-    setInterval(pollFailures,            5000);
-    setInterval(pollErrorClassification, 5000);
+    setInterval(fastPoll,                2000);
+    setInterval(pollAppData,             2000);
+    setInterval(pollSLO,                 2000);
+    setInterval(pollIncidents,           2000);
+    setInterval(pollFailures,            2000);
+    setInterval(pollErrorClassification, 2000);
 
     // ── Chaos Engineering ────────────────────────────────────────────────────
 
@@ -1849,8 +1849,8 @@
 
     pollChaosStatus();
     pollRemediation();
-    setInterval(pollChaosStatus,  5000);
-    setInterval(pollRemediation,  5000);
+    setInterval(pollChaosStatus,  2000);
+    setInterval(pollRemediation,  2000);
 
     // ── Tab switching ─────────────────────────────────────────────────────────
     document.querySelectorAll(".tab-btn").forEach(btn => {
