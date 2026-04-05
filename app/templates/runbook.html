@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Watchtower — Runbook</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080d18; --surface: #0f1629; --surface2: #131d35;
+      --border: #1e2d4a; --border2: #243350;
+      --blue: #3b82f6; --green: #10b981; --yellow: #f59e0b; --red: #ef4444;
+      --text: #e2e8f0; --muted: #64748b; --faint: #94a3b8;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 16px; line-height: 1.7; }
+
+    /* ── HEADER (matches dashboard) ─�� */
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px; height: 72px;
+      background: rgba(15,22,41,0.88);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(59,130,246,0.12);
+      box-shadow: 0 1px 0 rgba(59,130,246,0.08), 0 8px 32px rgba(0,0,0,0.4);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .logo-box {
+      width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+      background: linear-gradient(145deg, #2563eb 0%, #1e3a8a 100%);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 0 24px rgba(59,130,246,0.5);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .logo-box svg { width: 24px; height: 24px; }
+    .logo-text-wrap { display: flex; flex-direction: column; gap: 2px; }
+    .logo-title {
+      font-size: 17px; font-weight: 700; letter-spacing: -0.3px; line-height: 1;
+      background: linear-gradient(135deg, #f1f5f9 20%, #94a3b8 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .logo-sub { font-size: 10px; font-weight: 500; letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); }
+    .header-divider { width: 1px; height: 28px; background: var(--border); }
+    .logo-badge {
+      font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--yellow); background: rgba(245,158,11,0.1);
+      border: 1px solid rgba(245,158,11,0.3); border-radius: 5px; padding: 3px 9px;
+    }
+    .btn-back {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 13px; font-weight: 500; color: var(--muted); text-decoration: none;
+      border: 1px solid var(--border2); border-radius: 8px; padding: 7px 14px;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+    .btn-back:hover { color: var(--text); border-color: var(--faint); background: rgba(255,255,255,0.04); }
+
+    /* ── LAYOUT ── */
+    .page-wrap { max-width: 860px; margin: 0 auto; padding: 44px 32px 80px; }
+
+    /* ── HERO ── */
+    .hero { margin-bottom: 40px; }
+    .hero-eyebrow {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
+      color: var(--yellow); margin-bottom: 12px;
+    }
+    .hero-eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
+    .hero-title {
+      font-size: 36px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.15;
+      background: linear-gradient(135deg, #f1f5f9 30%, #64748b 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: 12px;
+    }
+    .hero-sub { font-size: 16px; color: var(--muted); max-width: 580px; line-height: 1.6; margin-bottom: 24px; }
+    .hero-chips { display: flex; flex-wrap: wrap; gap: 10px; }
+    .chip {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 500; color: var(--faint);
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 99px; padding: 5px 12px;
+    }
+    .chip-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .chip-dot.blue  { background: var(--blue); box-shadow: 0 0 5px var(--blue); }
+    .chip-dot.green { background: var(--green); box-shadow: 0 0 5px var(--green); }
+    .chip-dot.amber { background: var(--yellow); box-shadow: 0 0 5px var(--yellow); }
+
+    /* ── QUICK NAV ── */
+    .quick-nav {
+      position: sticky; top: 88px; z-index: 80;
+      margin-bottom: 26px;
+      background: rgba(15,22,41,0.86);
+      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(59,130,246,0.14);
+      border-radius: 14px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.22);
+      overflow: hidden;
+    }
+    .quick-nav-inner {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .quick-nav-inner::-webkit-scrollbar { display: none; }
+    .quick-nav-label {
+      flex-shrink: 0;
+      font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
+      color: var(--muted);
+      padding-right: 2px;
+    }
+    .quick-link {
+      display: inline-flex; align-items: center; gap: 8px;
+      flex-shrink: 0;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border2);
+      background: linear-gradient(180deg, rgba(19,29,53,0.92), rgba(15,22,41,0.92));
+      color: var(--faint);
+      text-decoration: none;
+      font-size: 13px; font-weight: 600;
+      transition: transform 0.18s, border-color 0.18s, color 0.18s, box-shadow 0.18s;
+    }
+    .quick-link:hover {
+      color: var(--text);
+      border-color: rgba(59,130,246,0.35);
+      box-shadow: 0 0 0 1px rgba(59,130,246,0.12), 0 8px 18px rgba(59,130,246,0.14);
+      transform: translateY(-1px);
+    }
+    .quick-link-num {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700;
+      background: rgba(255,255,255,0.06);
+      color: var(--muted);
+    }
+    .quick-link.critical .quick-link-num { background: rgba(239,68,68,0.18); color: var(--red); }
+    .quick-link.warning .quick-link-num { background: rgba(245,158,11,0.18); color: var(--yellow); }
+    .quick-link.ok .quick-link-num { background: rgba(16,185,129,0.18); color: var(--green); }
+
+    /* ── TOC ── */
+    .toc {
+      background: var(--surface); border: 1px solid var(--border);
+      border-left: 3px solid rgba(59,130,246,0.5);
+      border-radius: 12px; padding: 20px 24px; margin-bottom: 44px;
+    }
+    .toc-title {
+      font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 14px; display: flex; align-items: center; gap: 7px;
+    }
+    .toc-title svg { opacity: 0.6; }
+    .toc-list { list-style: none; display: flex; flex-direction: column; gap: 1px; }
+    .toc-list li a {
+      display: flex; align-items: center; gap: 10px;
+      color: var(--faint); text-decoration: none; font-size: 14px;
+      padding: 6px 8px; border-radius: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .toc-list li a:hover { background: rgba(59,130,246,0.08); color: var(--blue); }
+    .toc-num {
+      width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; background: var(--border2); color: var(--muted);
+    }
+    .toc-sep { height: 1px; background: var(--border); margin: 6px 0; }
+
+    /* ── SECTION ── */
+    .section { margin-bottom: 48px; }
+    .section-anchor { display: block; height: 172px; margin-top: -172px; visibility: hidden; }
+
+    /* ── ALERT CARD ── */
+    .alert-card {
+      border-radius: 14px; border: 1px solid;
+      overflow: hidden; margin-bottom: 8px;
+    }
+    .alert-card.red {
+      border-color: rgba(239,68,68,0.35); background: rgba(239,68,68,0.04);
+      box-shadow: 0 0 40px rgba(239,68,68,0.07);
+    }
+    .alert-card.yellow {
+      border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.04);
+      box-shadow: 0 0 40px rgba(245,158,11,0.07);
+    }
+    .alert-card.green {
+      border-color: rgba(16,185,129,0.35); background: rgba(16,185,129,0.04);
+      box-shadow: 0 0 40px rgba(16,185,129,0.07);
+    }
+    .alert-top-bar { height: 3px; }
+    .alert-card.red    .alert-top-bar { background: linear-gradient(90deg, var(--red), transparent); }
+    .alert-card.yellow .alert-top-bar { background: linear-gradient(90deg, var(--yellow), transparent); }
+    .alert-card.green  .alert-top-bar { background: linear-gradient(90deg, var(--green), transparent); }
+    .alert-body { padding: 24px 28px; }
+    .alert-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+    .alert-icon-wrap {
+      width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .icon-red    { background: rgba(239,68,68,0.15); }
+    .icon-yellow { background: rgba(245,158,11,0.15); }
+    .icon-green  { background: rgba(16,185,129,0.15); }
+    .alert-title { font-size: 20px; font-weight: 700; color: #f1f5f9; flex: 1; }
+    .alert-badge {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+      border-radius: 5px; padding: 3px 10px;
+    }
+    .badge-red    { color: var(--red);    background: rgba(239,68,68,0.12);  border: 1px solid rgba(239,68,68,0.3); }
+    .badge-yellow { color: var(--yellow); background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); }
+    .badge-green  { color: var(--green);  background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); }
+    .alert-trigger {
+      font-size: 13px; color: var(--muted); margin-bottom: 22px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .alert-trigger code { font-size: 12px; }
+
+    /* ── STEPS ── */
+    .steps { list-style: none; padding: 0; }
+    .step  { display: flex; gap: 0; position: relative; }
+    .step-left { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 42px; }
+    .step-num {
+      width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; z-index: 1;
+    }
+    .num-red    { background: rgba(239,68,68,0.2);  color: var(--red);    border: 1px solid rgba(239,68,68,0.3); }
+    .num-yellow { background: rgba(245,158,11,0.2); color: var(--yellow); border: 1px solid rgba(245,158,11,0.3); }
+    .num-green  { background: rgba(16,185,129,0.2); color: var(--green);  border: 1px solid rgba(16,185,129,0.3); }
+    .num-blue   { background: rgba(59,130,246,0.2); color: var(--blue);   border: 1px solid rgba(59,130,246,0.3); }
+    .step-line  { width: 1px; flex: 1; min-height: 16px; margin: 3px 0; }
+    .line-red    { background: linear-gradient(to bottom, rgba(239,68,68,0.25), transparent); }
+    .line-yellow { background: linear-gradient(to bottom, rgba(245,158,11,0.25), transparent); }
+    .line-green  { background: linear-gradient(to bottom, rgba(16,185,129,0.25), transparent); }
+    .line-blue   { background: linear-gradient(to bottom, rgba(59,130,246,0.25), transparent); }
+    .step:last-child .step-line { display: none; }
+    .step-body { flex: 1; padding: 2px 0 22px 4px; }
+    .step-body strong { color: #f1f5f9; font-size: 15px; display: block; margin-bottom: 6px; }
+    .step-body p { color: var(--faint); font-size: 14px; margin-bottom: 8px; line-height: 1.6; }
+
+    /* ── GENERAL SECTIONS ── */
+    .section-h2 {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 19px; font-weight: 700; color: #f1f5f9;
+      margin-bottom: 20px; padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-h2-icon {
+      width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+      background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.2);
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── CODE ── */
+    code {
+      font-family: "SF Mono","Fira Code","Menlo",monospace;
+      background: rgba(255,255,255,0.07); border: 1px solid var(--border2);
+      border-radius: 5px; padding: 2px 7px; font-size: 12.5px; color: #c4d4f0;
+    }
+    pre {
+      background: #050810; border: 1px solid var(--border2); border-radius: 10px;
+      padding: 0; font-family: "SF Mono","Fira Code",monospace;
+      font-size: 13px; color: #c4d4f0; overflow-x: auto; margin: 10px 0;
+      line-height: 1.65;
+    }
+    .pre-bar {
+      display: flex; align-items: center; gap: 6px;
+      padding: 9px 16px; border-bottom: 1px solid var(--border2);
+      background: rgba(255,255,255,0.02);
+    }
+    .pre-dot { width: 9px; height: 9px; border-radius: 50%; }
+    .pre-dot-r { background: rgba(239,68,68,0.6); }
+    .pre-dot-y { background: rgba(245,158,11,0.6); }
+    .pre-dot-g { background: rgba(16,185,129,0.6); }
+    .pre-label { font-size: 11px; color: var(--muted); margin-left: 2px; font-family: inherit; }
+    .pre-code  { padding: 14px 18px; display: block; }
+
+    /* ── INFO GRID ── */
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+    .info-cell {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px 16px; transition: border-color 0.2s, transform 0.2s;
+    }
+    .info-cell:hover { border-color: rgba(59,130,246,0.3); transform: translateY(-1px); }
+    .info-cell .label {
+      font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+    }
+    .info-cell .val { font-size: 13.5px; color: #c4d4f0; font-family: "SF Mono", monospace; }
+    .info-cell .method { font-size: 10px; font-weight: 700; color: var(--green); margin-right: 4px; }
+    .info-cell.port-5002 { border-left: 3px solid rgba(139,92,246,0.5); }
+    .info-cell.port-5001 { border-left: 3px solid rgba(59,130,246,0.5); }
+
+    /* ── CALLOUT ── */
+    .callout {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 14px 16px; border-radius: 10px; margin: 14px 0;
+      font-size: 14px; line-height: 1.5;
+    }
+    .callout.info   { background: rgba(59,130,246,0.07);  border: 1px solid rgba(59,130,246,0.2);  color: #93c5fd; }
+    .callout.warn   { background: rgba(245,158,11,0.07);  border: 1px solid rgba(245,158,11,0.2);  color: #fcd34d; }
+    .callout.tip    { background: rgba(16,185,129,0.07);  border: 1px solid rgba(16,185,129,0.2);  color: #6ee7b7; }
+    .callout svg    { flex-shrink: 0; margin-top: 1px; }
+
+    /* ── FOOTER ── */
+    .updated { font-size: 12px; color: var(--muted); margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .updated-badge { font-size: 11px; font-weight: 600; color: var(--blue); background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); border-radius: 5px; padding: 3px 9px; }
+
+    .fab-top {
+      position: fixed; right: 24px; bottom: 24px; z-index: 90;
+      width: 48px; height: 48px;
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      text-decoration: none;
+      color: #dbeafe;
+      background: linear-gradient(145deg, #2563eb 0%, #1d4ed8 100%);
+      border: 1px solid rgba(147,197,253,0.28);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 14px 30px rgba(37,99,235,0.32);
+      transition: transform 0.18s, box-shadow 0.18s, filter 0.18s;
+    }
+    .fab-top:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.05);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 18px 34px rgba(37,99,235,0.38);
+    }
+
+    @media (max-width: 900px) {
+      header { padding: 0 22px; }
+      .page-wrap { padding: 34px 20px 88px; }
+      .quick-nav { top: 82px; }
+      .toc { margin-bottom: 30px; }
+    }
+
+    @media (max-width: 640px) {
+      .hero-title { font-size: 30px; }
+      .quick-nav-label { display: none; }
+      .quick-nav-inner { padding: 10px 12px; }
+      .quick-link { font-size: 12px; padding: 8px 11px; }
+      .updated { gap: 10px; align-items: flex-start; flex-direction: column; }
+      .fab-top { right: 18px; bottom: 18px; width: 44px; height: 44px; }
+    }
+  </style>
+</head>
+<body id="top">
+
+  <header>
+    <div class="header-left">
+      <div class="logo-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="22" x2="12" y2="13" stroke="rgba(255,255,255,0.3)" stroke-width="1.4"/>
+          <line x1="10" y1="22" x2="14" y2="22" stroke="rgba(255,255,255,0.3)" stroke-width="1.4"/>
+          <line x1="10.5" y1="18" x2="13.5" y2="18" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <path d="M10,13 L12,10.5 L14,13Z" fill="rgba(255,255,255,0.25)" stroke="rgba(255,255,255,0.35)" stroke-width="1"/>
+          <line x1="12" y1="10" x2="5" y2="6"  stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+          <line x1="12" y1="10" x2="19" y2="6" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+          <path d="M6,9 A8,8 0 0,1 18,9" stroke="rgba(255,255,255,0.5)" stroke-width="1.3"/>
+          <path d="M3,7 A11,11 0 0,1 21,7" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <path d="M2,12 C6,7 18,7 22,12 C18,17 6,17 2,12Z" stroke="white" stroke-width="1.6"/>
+          <circle cx="12" cy="12" r="3.8" stroke="white" stroke-width="1.5"/>
+          <circle cx="12" cy="12" r="1.7" fill="white" stroke="none"/>
+          <circle cx="13.2" cy="10.8" r="0.7" fill="rgba(255,255,255,0.6)" stroke="none"/>
+          <line x1="1" y1="12" x2="3.2" y2="12" stroke="rgba(255,255,255,0.35)" stroke-width="1.3"/>
+          <line x1="20.8" y1="12" x2="23" y2="12" stroke="rgba(255,255,255,0.35)" stroke-width="1.3"/>
+        </svg>
+      </div>
+      <div class="logo-text-wrap">
+        <div class="logo-title">Watchtower</div>
+        <div class="logo-sub">Admin Console</div>
+      </div>
+      <div class="header-divider"></div>
+      <div class="logo-badge">Runbook</div>
+    </div>
+    <a href="/dashboard" class="btn-back">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Dashboard
+    </a>
+  </header>
+
+  <div class="page-wrap">
+
+    <!-- HERO -->
+    <div class="hero">
+      <div class="hero-eyebrow">
+        <span class="hero-eyebrow-dot"></span>
+        On-Call Reference
+      </div>
+      <div class="hero-title">Incident Runbook</div>
+      <p class="hero-sub">Step-by-step response guides for on-call engineers. If you are reading this at 3 AM, take a breath — you've got this.</p>
+      <div class="hero-chips">
+        <div class="chip"><span class="chip-dot blue"></span>Monitor checks every 15s</div>
+        <div class="chip"><span class="chip-dot amber"></span>Alert cooldown 5 min</div>
+        <div class="chip"><span class="chip-dot green"></span>Recovery alerts auto-fire</div>
+        <div class="chip"><span class="chip-dot blue"></span>App → :5001 · Monitor UI → :5002</div>
+      </div>
+    </div>
+
+    <div class="quick-nav">
+      <div class="quick-nav-inner">
+        <div class="quick-nav-label">Jump To</div>
+        <a href="#service-down" class="quick-link critical"><span class="quick-link-num">1</span>Service Down</a>
+        <a href="#high-error-rate" class="quick-link warning"><span class="quick-link-num">2</span>High Error Rate</a>
+        <a href="#service-recovered" class="quick-link ok"><span class="quick-link-num">3</span>Recovered</a>
+        <a href="#debugging" class="quick-link"><span class="quick-link-num">4</span>Debugging</a>
+        <a href="#restart" class="quick-link"><span class="quick-link-num">5</span>Restart</a>
+        <a href="#slo-breach" class="quick-link"><span class="quick-link-num">6</span>SLO</a>
+        <a href="#key-endpoints" class="quick-link"><span class="quick-link-num">7</span>Endpoints</a>
+      </div>
+    </div>
+
+    <!-- TABLE OF CONTENTS -->
+    <div class="toc">
+      <div class="toc-title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Contents
+      </div>
+      <ul class="toc-list">
+        <li><a href="#service-down"><span class="toc-num" style="background:rgba(239,68,68,0.2);color:var(--red)">1</span>Alert: Service Down</a></li>
+        <li><a href="#high-error-rate"><span class="toc-num" style="background:rgba(245,158,11,0.2);color:var(--yellow)">2</span>Alert: High Error Rate</a></li>
+        <li><a href="#service-recovered"><span class="toc-num" style="background:rgba(16,185,129,0.2);color:var(--green)">3</span>Alert: Service Recovered</a></li>
+        <div class="toc-sep"></div>
+        <li><a href="#debugging"><span class="toc-num">4</span>General Debugging Steps</a></li>
+        <li><a href="#restart"><span class="toc-num">5</span>Starting &amp; Restarting Everything</a></li>
+        <li><a href="#slo-breach"><span class="toc-num">6</span>SLO Breach Response</a></li>
+        <li><a href="#key-endpoints"><span class="toc-num">7</span>Key Endpoints Reference</a></li>
+      </ul>
+    </div>
+
+    <!-- ── 1. SERVICE DOWN ── -->
+    <div class="section">
+      <span class="section-anchor" id="service-down"></span>
+      <div class="alert-card red">
+        <div class="alert-top-bar"></div>
+        <div class="alert-body">
+          <div class="alert-header">
+            <div class="alert-icon-wrap icon-red">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <span class="alert-title">Alert: Service Down</span>
+            <span class="alert-badge badge-red">Critical</span>
+          </div>
+          <div class="alert-trigger">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Triggered when <code>GET /health</code> fails or times out. Monitor checks every <strong style="color:var(--faint)">15 seconds</strong>. Alert fires to Discord with a 5-minute cooldown between repeats.
+          </div>
+          <ol class="steps">
+            <li class="step">
+              <div class="step-left"><div class="step-num num-red">1</div><div class="step-line line-red"></div></div>
+              <div class="step-body">
+                <strong>Check the monitor dashboard (port 5002)</strong>
+                <p>Open <code>http://localhost:5002/dashboard</code>. This runs independently of the main app — it stays up even when the app crashes. The status banner will show red if the app is unreachable.</p>
+              </div>
+            </li>
+            <li class="step">
+              <div class="step-left"><div class="step-num num-red">2</div><div class="step-line line-red"></div></div>
+              <div class="step-body">
+                <strong>Check if the Flask process is running</strong>
+                <pre><div class="pre-bar"><span class="pre-dot pre-dot-r"></span><span class="pre-dot pre-dot-y"></span><span class="pre-dot pre-dot-g"></span><span class="pre-label">terminal</span></div><code class="pre-code">ps aux | grep run.py
+docker ps  # check if postgres container is also up</code></pre>
+              </div>
+            </li>
+            <li class="step">
+              <div class="step-left"><div class="step-num num-red">3</div><div class="step-line line-red"></div></div>
+              <div class="step-body">
+                <strong>Read the crash reason from logs</strong>
+                <p>The monitor dashboard Live Log Feed reads directly from <code>logs/app.log</code> even when the app is down. Or read it directly:</p>
+                <pre><div class="pre-bar"><span class="pre-dot pre-dot-r"></span><span class="pre-dot pre-dot-y"></span><span class="pre-dot pre-dot-g"></span><span class="pre-label">terminal</span></div><code class="pre-code">tail -50 logs/app.log</code></pre>
+                <p>Look for <code>ERROR</code> or <code>Exception</code> lines just before the service went silent.</p>
+              </div>
+            </li>
+            <li class="step">
+              <div class="step-left"><div class="step-num num-red">4</div><div class="step-line line-red"></div></div>
+              <div class="step-body">
+                <strong>Check the database is reachable</strong>
+                <pre><div class="pre-bar"><span class="pre-dot pre-dot-r"></span><span class="pre-dot pre-dot-y"></span><span class="pre-dot pre-dot-g"></span><span class="pre-label">terminal</span></div><code class="pre-code">docker ps | grep postgres
+# if stopped:
+docker start watchtower-db</code></pre>
+                <div class="callout info">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  The <code>/health</code> endpoint runs <code>SELECT 1</code> against Postgres on every call. A dead DB = a failing health check.
+                </div>
+              </div>
+            </li>
+            <li class="step">
+              <div class="step-left"><div class="step-num num-red">5</div></div>
+              <div class="step-body">
+                <strong>Restart the Flask app</strong>
+                <p>See the <a href="#restart" style="color:var(--blue)">Starting &amp; Restarting section</a> below. Once the app recovers, the monitor will automatically fire a ✅ Service Recovered Discord alert.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 2. HIGH ERROR RATE ── -->
+    <div class="section">
+      <span class="section-anchor" id="high-error-rate"></span>
+      <div class="alert-card yellow">
+        <div class="alert-top-bar"></div>
+        <div class="alert-body">
+          <div class="alert-header">
+            <div class="alert-icon-wrap icon-yellow">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <span class="alert-title">Alert: High Error Rate</span>
+            <span class="alert-badge badge-yellow">Warning</span>
+          </div>
+          <div class="alert-trigger">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Triggered when <strong style="color:var(--faint)">≥ 50%</strong> of requests in the last <strong style="color:var(--faint)">2-minute window</strong> return 5xx, with at least 5 requests in that window.
+          </div>
+          <ol class="steps">
+            <li class="step">
+              <div class="step-left"><div class="step-num num-yellow">1</div><div class="step-line line-yellow"></div></div>
+              <div class="step-body">
+                <strong>Check the Error Rate card and chart</strong>
+                <p>Go to the dashboard Overview tab. The Error Rate card turns red when elevated. Switch to the Error Rate History chart and use the 5m/15m/30m selector to see when it started.</p>
+              </div>
+            </li>
+            <li class="step">
+              <div class="step-left"><div class="step-num num-yellow">2</div><div class="step-line line-yellow"></div></div>
+              <div class="step-body">
+                <strong>Identify failing paths in the log feed</strong>
+                <p>In the Data tab → Live Log Feed, look for rows with a red left border (<code>ERROR</code> level) and red <code>5xx</code> status codes. Note which endpoints are failing and when they started.</p>
+              </div>
+            </li>
+            <li class="step">
+              <div class="step-left"><div class="step-num num-yellow">3</div><div class="step-line line-yellow"></div></div>
+              <div class="step-body">
+                <strong>Check for a bad recent commit</strong>
+                <pre><div class="pre-bar"><span class="pre-dot pre-dot-r"></span><span class="pre-dot pre-dot-y"></span><span class="pre-dot pre-dot-g"></span><span class="pre-label">terminal</span></div><code class="pre-code">git log --oneline -10</code></pre>
+                <p>If a recent commit introduced the errors, roll it back:</p>
+                <pre><div class="pre-bar"><span class="pre-dot pre-dot-r"></span><span class="pre-dot pre-dot-y"></span><span class="pre-dot pre-dot-g"></span><span class="pre-label">terminal</span></div><code class="pre-code">git revert HEAD
+python3 run.py</code></pre>
+              </div>
+            </li>
+            <li class="step">
+              <div class="step-left"><div class="step-num num-yellow">4</div></div>
+              <div class="step-body">
+                <strong>Check database connectivity</strong>
+                <p>Most 5xx errors are DB failures. Confirm the container is running and the tables exist:</p>
+                <pre><div class="pre-bar"><span class="pre-dot pre-dot-r"></span><span class="pre-dot pre-dot-y"></span><span class="pre-dot pre-dot-g"></span><span class="pre-label">terminal</span></div><code class="pre-code">docker ps | grep postgres
+# if tables are missing, re-run the seed:
+python3 seed.py</code></pre>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 3. SERVICE RECOVERED ── -->
+    <div class="section">
+      <span class="section-anchor" id="service-recovered"></span>
+      <div class="alert-card green">
+        <div class="alert-top-bar"></div>
+        <div class="alert-body">
+          <div class="alert-header">
+            <div class="alert-icon-wrap icon-green">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <span class="alert-title">Alert: Service Recovered</span>
+            <span class="alert-badge badge-green">Auto</span>
+          </div>
+          <div class="alert-trigger">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Fired automatically by the monitor when <code>/health</code> returns 200 after a previous outage. Includes total downtime duration. No action required — this is informational.
+          </div>
+          <div class="callout tip">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            After a recovery alert, check the Incident History panel on the dashboard to confirm the incident was recorded and review duration.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 4. GENERAL DEBUGGING ── -->
+    <div class="section">
+      <span class="section-anchor" id="debugging"></span>
+      <h2 class="section-h2">
+        <div class="section-h2-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        General Debugging Steps
+      </h2>
+      <ol class="steps">
+        <li class="step">
+          <div class="step-left"><div class="step-num num-blue">1</div><div class="step-line line-blue"></div></div>
+          <div class="step-body">
+            <strong>Check the Live Log Feed (Data tab)</strong>
+            <p><code>GET /logs</code> returns the last 200 log entries in memory. Each request is logged with method, path, status code, and duration. Left border color = severity. Red border = error, amber = warning.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-left"><div class="step-num num-blue">2</div><div class="step-line line-blue"></div></div>
+          <div class="step-body">
+            <strong>Check system metrics (Overview tab rings)</strong>
+            <p>CPU and RAM rings glow red when above 75%. High CPU (&gt;90%) or RAM saturation causes slow responses and eventually timeouts. Check <code>GET /metrics</code> for raw values.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-left"><div class="step-num num-blue">3</div><div class="step-line line-blue"></div></div>
+          <div class="step-body">
+            <strong>Check Top Endpoints (Data tab)</strong>
+            <p>Is one path receiving an abnormally disproportionate share of traffic? The gold bar = #1 endpoint. A runaway client, polling loop, or load test will show here immediately.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-left"><div class="step-num num-blue">4</div><div class="step-line line-blue"></div></div>
+          <div class="step-body">
+            <strong>Check historical charts for the onset time</strong>
+            <p>Use the 5m/15m/30m/1h time selector on the Overview charts. Error Rate and Response Time are seeded from the full log file, so you can see history even after a restart.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-left"><div class="step-num num-blue">5</div></div>
+          <div class="step-body">
+            <strong>Check Recent Events (Data tab)</strong>
+            <p><code>GET /events</code> returns the last 100 data-mutation events. Unexpected mass-deletes or creates surface here with a red/green left border accent.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <!-- ── 5. RESTART ── -->
+    <div class="section">
+      <span class="section-anchor" id="restart"></span>
+      <h2 class="section-h2">
+        <div class="section-h2-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        </div>
+        Starting &amp; Restarting Everything
+      </h2>
+      <p style="color:var(--faint);font-size:14px;margin-bottom:18px">Three separate terminals. Start them in this order.</p>
+
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div>
+          <p style="font-size:13px;font-weight:600;color:var(--faint);margin-bottom:6px;display:flex;align-items:center;gap:6px">
+            <span style="background:rgba(59,130,246,0.15);color:var(--blue);border:1px solid rgba(59,130,246,0.25);border-radius:5px;padding:2px 8px;font-size:11px;font-weight:700">Terminal 1</span> PostgreSQL (Docker)
+          </p>
+          <pre><div class="pre-bar"><span class="pre-dot pre-dot-r"></span><span class="pre-dot pre-dot-y"></span><span class="pre-dot pre-dot-g"></span><span class="pre-label">first time only</span></div><code class="pre-code">docker run -d --name watchtower-db \
+  -e POSTGRES_DB=hackathon_db \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 5432:5432 postgres:16</code></pre>
+          <pre><div class="pre-bar"><span class="pre-dot pre-dot-r"></span><span class="pre-dot pre-dot-y"></span><span class="pre-dot pre-dot-g"></span><span class="pre-label">subsequent runs</span></div><code class="pre-code">docker start watchtower-db</code></pre>
+        </div>
+
+        <div>
+          <p style="font-size:13px;font-weight:600;color:var(--faint);margin-bottom:6px;display:flex;align-items:center;gap:6px">
+            <span style="background:rgba(16,185,129,0.12);color:var(--green);border:1px solid rgba(16,185,129,0.25);border-radius:5px;padding:2px 8px;font-size:11px;font-weight:700">Terminal 2</span> Flask App → <code>localhost:5001</code>
+          </p>
+          <pre><div class="pre-bar"><span class="pre-dot pre-dot-r"></span><span class="pre-dot pre-dot-y"></span><span class="pre-dot pre-dot-g"></span><span class="pre-label">seed DB first time only</span></div><code class="pre-code">python3 seed.py   # creates tables + inserts sample data</code></pre>
+          <pre><div class="pre-bar"><span class="pre-dot pre-dot-r"></span><span class="pre-dot pre-dot-y"></span><span class="pre-dot pre-dot-g"></span><span class="pre-label">every time</span></div><code class="pre-code">python3 run.py</code></pre>
+        </div>
+
+        <div>
+          <p style="font-size:13px;font-weight:600;color:var(--faint);margin-bottom:6px;display:flex;align-items:center;gap:6px">
+            <span style="background:rgba(139,92,246,0.12);color:#a78bfa;border:1px solid rgba(139,92,246,0.25);border-radius:5px;padding:2px 8px;font-size:11px;font-weight:700">Terminal 3</span> Monitor + Dashboard UI → <code>localhost:5002</code>
+          </p>
+          <pre><div class="pre-bar"><span class="pre-dot pre-dot-r"></span><span class="pre-dot pre-dot-y"></span><span class="pre-dot pre-dot-g"></span><span class="pre-label">every time</span></div><code class="pre-code">python3 monitor.py</code></pre>
+        </div>
+      </div>
+
+      <div class="callout tip" style="margin-top:18px">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Confirm recovery: <code>curl http://localhost:5001/health</code> should return <code>{"status":"ok","database":"ok"}</code>.
+      </div>
+    </div>
+
+    <!-- ── 6. SLO BREACH ── -->
+    <div class="section">
+      <span class="section-anchor" id="slo-breach"></span>
+      <h2 class="section-h2">
+        <div class="section-h2-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L3 7v5c0 5.25 3.8 10.15 9 11.35C17.2 22.15 21 17.25 21 12V7L12 2z"/></svg>
+        </div>
+        SLO Breach Response
+      </h2>
+      <p style="color:var(--faint);font-size:14px;margin-bottom:16px">SLO target is <strong style="color:#f1f5f9">99.9% uptime</strong> (error budget = 0.1% of all requests). When budget consumed exceeds 100%, the SLO is breached.</p>
+      <ol class="steps">
+        <li class="step">
+          <div class="step-left"><div class="step-num num-blue">1</div><div class="step-line line-blue"></div></div>
+          <div class="step-body">
+            <strong>Check the SLO widget on the Overview tab</strong>
+            <p>The widget shows uptime %, error budget consumed, and total error requests. A red "✗ Breached" badge means the budget is exhausted.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-left"><div class="step-num num-blue">2</div><div class="step-line line-blue"></div></div>
+          <div class="step-body">
+            <strong>Check the Incident History panel</strong>
+            <p>The panel shows the last 20 "Alert fired" log entries. This tells you when and how many times the service degraded in the current log window.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-left"><div class="step-num num-blue">3</div></div>
+          <div class="step-body">
+            <strong>Reduce errors to recover budget</strong>
+            <p>Fix the root cause of 5xx responses (see High Error Rate guide above). The SLO widget recomputes live on the next poll — budget consumed will drop as new successful requests come in.</p>
+            <div class="callout warn">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              SLO is computed from the full <code>logs/app.log</code> file. Deleting the log file resets all history including the SLO calculation.
+            </div>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <!-- ── 7. ENDPOINTS REFERENCE ── -->
+    <div class="section">
+      <span class="section-anchor" id="key-endpoints"></span>
+      <h2 class="section-h2">
+        <div class="section-h2-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        </div>
+        Key Endpoints Reference
+      </h2>
+
+      <p style="font-size:12px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:6px">
+        <span style="width:10px;height:10px;border-radius:50%;background:var(--blue);display:inline-block;box-shadow:0 0 6px var(--blue)"></span>
+        Main App — localhost:5001
+      </p>
+      <div class="info-grid" style="margin-bottom:20px">
+        <div class="info-cell port-5001"><div class="label">Health Check</div><div class="val"><span class="method">GET</span>/health</div></div>
+        <div class="info-cell port-5001"><div class="label">System Metrics</div><div class="val"><span class="method">GET</span>/metrics</div></div>
+        <div class="info-cell port-5001"><div class="label">Log Buffer</div><div class="val"><span class="method">GET</span>/logs</div></div>
+        <div class="info-cell port-5001"><div class="label">Event History</div><div class="val"><span class="method">GET</span>/events</div></div>
+        <div class="info-cell port-5001"><div class="label">All Users</div><div class="val"><span class="method">GET</span>/users</div></div>
+        <div class="info-cell port-5001"><div class="label">All URLs</div><div class="val"><span class="method">GET</span>/urls</div></div>
+        <div class="info-cell port-5001"><div class="label">Record Incident</div><div class="val"><span class="method" style="color:var(--yellow)">POST</span>/incidents/record</div></div>
+      </div>
+
+      <p style="font-size:12px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:6px">
+        <span style="width:10px;height:10px;border-radius:50%;background:#a78bfa;display:inline-block;box-shadow:0 0 6px #a78bfa"></span>
+        Monitor UI — localhost:5002 (independent, always up)
+      </p>
+      <div class="info-grid">
+        <div class="info-cell port-5002"><div class="label">Status Page</div><div class="val"><span class="method">GET</span>/</div></div>
+        <div class="info-cell port-5002"><div class="label">Dashboard Login</div><div class="val"><span class="method">GET</span>/dashboard/login</div></div>
+        <div class="info-cell port-5002"><div class="label">Admin Dashboard</div><div class="val"><span class="method">GET</span>/dashboard</div></div>
+        <div class="info-cell port-5002"><div class="label">This Runbook</div><div class="val"><span class="method">GET</span>/dashboard/runbook</div></div>
+        <div class="info-cell port-5002"><div class="label">Log File History</div><div class="val"><span class="method">GET</span>/dashboard/history</div></div>
+        <div class="info-cell port-5002"><div class="label">SLO Status</div><div class="val"><span class="method">GET</span>/dashboard/slo</div></div>
+        <div class="info-cell port-5002"><div class="label">Incident Log</div><div class="val"><span class="method">GET</span>/dashboard/incidents</div></div>
+      </div>
+    </div>
+
+    <div class="updated">
+      <span>Last updated: April 2026 · Watchtower PE Hackathon</span>
+      <span class="updated-badge">v2.0</span>
+    </div>
+
+  </div>
+
+  <a href="#top" class="fab-top" aria-label="Back to top" title="Back to top">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+  </a>
+</body>
+</html>
