@@ -8,6 +8,8 @@ from flask import Blueprint, jsonify, request
 from peewee import fn
 
 from app.models.event import Event
+from app.models.url import Url
+from app.models.user import User
 
 events_bp = Blueprint("events", __name__, url_prefix="/events")
 
@@ -47,6 +49,18 @@ def list_or_create_events():
 
         if not isinstance(event_type, str):
             return jsonify({"error": "event_type must be a string"}), 400
+
+        if url_id is not None:
+            if not isinstance(url_id, int):
+                return jsonify({"error": "url_id must be an integer"}), 400
+            if not Url.get_or_none(Url.id == url_id):
+                return jsonify({"error": "URL not found"}), 404
+
+        if user_id is not None:
+            if not isinstance(user_id, int):
+                return jsonify({"error": "user_id must be an integer"}), 400
+            if not User.get_or_none(User.id == user_id):
+                return jsonify({"error": "User not found"}), 404
 
         details = data.get("details", {})
         if not isinstance(details, dict):
