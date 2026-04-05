@@ -97,16 +97,17 @@ def update_event(event_id):
         return jsonify({"error": "Event not found"}), 404
 
     data = request.get_json(silent=True)
-    if not data:
-        return jsonify({"error": "Request body must be JSON"}), 400
+    if not data or not isinstance(data, dict):
+        return jsonify({"error": "Request body must be a JSON object"}), 400
 
     if "event_type" in data:
+        if not isinstance(data["event_type"], str):
+            return jsonify({"error": "event_type must be a string"}), 400
         event.event_type = data["event_type"]
     if "details" in data:
-        details = data["details"]
-        if isinstance(details, dict):
-            details = json.dumps(details)
-        event.details = details
+        if not isinstance(data["details"], dict):
+            return jsonify({"error": "details must be a JSON object"}), 400
+        event.details = json.dumps(data["details"])
     if "url_id" in data:
         event.url = data["url_id"]
     if "user_id" in data:

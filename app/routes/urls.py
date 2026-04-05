@@ -57,6 +57,9 @@ def list_or_create_urls():
         if not isinstance(original_url, str):
             return jsonify({"error": "url must be a string"}), 400
 
+        if not original_url.startswith(("http://", "https://")):
+            return jsonify({"error": "url must be a valid URL starting with http:// or https://"}), 422
+
         if user_id is not None:
             if not isinstance(user_id, int):
                 return jsonify({"error": "user_id must be an integer"}), 400
@@ -138,6 +141,9 @@ def shorten_url():
 
     if not isinstance(original_url, str):
         return jsonify({"error": "url must be a string"}), 400
+
+    if not original_url.startswith(("http://", "https://")):
+        return jsonify({"error": "url must be a valid URL starting with http:// or https://"}), 422
 
     if user_id is not None:
         if not isinstance(user_id, int):
