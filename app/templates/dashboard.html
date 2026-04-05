@@ -71,7 +71,7 @@
     main {
       max-width: 1300px;
       margin: 0 auto;
-      padding: 26px 32px 48px;
+      padding: 16px 32px 48px;
       display: flex;
       flex-direction: column;
       gap: 22px;
@@ -279,6 +279,23 @@
     .incident-time { font-family: "SF Mono","Fira Code",monospace; font-size: 12px; color: var(--muted); padding-top: 1px; }
     .incident-msg  { font-size: 13px; color: var(--faint); line-height: 1.4; }
 
+    /* ── TABS ── */
+    .tab-bar {
+      display: flex; gap: 4px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .tab-btn {
+      background: none; border: none; cursor: pointer;
+      padding: 10px 20px; font-size: 14px; font-weight: 600;
+      color: var(--muted); border-bottom: 2px solid transparent;
+      margin-bottom: -1px; transition: color 0.15s, border-color 0.15s;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .tab-panel { display: none; flex-direction: column; gap: 22px; }
+    .tab-panel.active { display: flex; }
+
     /* ── CHART Y-AXIS ── */
     .chart-body  { display: flex; align-items: stretch; }
     .y-axis      { display: flex; flex-direction: column; justify-content: space-between; padding: 8px 5px 8px 16px; font-size: 10px; color: var(--muted); text-align: right; min-width: 34px; font-family: "SF Mono","Fira Code",monospace; flex-shrink: 0; }
@@ -323,6 +340,15 @@
       <span id="status-text">Checking…</span>
       <span class="status-uptime" id="uptime-text"></span>
     </div>
+
+    <!-- TAB BAR -->
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="overview">Overview</button>
+      <button class="tab-btn" data-tab="data">Data</button>
+    </div>
+
+    <!-- TAB: OVERVIEW -->
+    <div class="tab-panel active" id="tab-overview">
 
     <!-- METRIC RINGS -->
     <div class="grid-4">
@@ -590,6 +616,11 @@
       </div>
     </div>
 
+    </div><!-- end tab-overview -->
+
+    <!-- TAB: DATA -->
+    <div class="tab-panel" id="tab-data">
+
     <!-- TOP ENDPOINTS + ACTIVE URLs -->
     <div class="grid-2-l">
 
@@ -641,6 +672,8 @@
         </tbody>
       </table>
     </div>
+
+    </div><!-- end tab-data -->
 
   </main>
 
@@ -744,7 +777,14 @@
     // ── time range selector ───────────────────────────────────────────────────
     let viewPts = 60;
 
-    function getSlice(arr) { return arr.slice(-viewPts); }
+    function getSlice(arr) {
+      const slice = arr.slice(-viewPts);
+      // Pad with nulls at the front so the line always fills the full width
+      if (slice.length < viewPts) {
+        return Array(viewPts - slice.length).fill(null).concat(slice);
+      }
+      return slice;
+    }
 
     function redrawCharts() {
       drawChart("line-cpu",  "area-cpu",  getSlice(hist.cpu),       100);
@@ -1087,6 +1127,17 @@
     setInterval(pollAppData,   15000);
     setInterval(pollSLO,       30000);
     setInterval(pollIncidents, 30000);
+
+    // ── Tab switching ─────────────────────────────────────────────────────────
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+        if (btn.dataset.tab === "overview") redrawCharts();
+      });
+    });
   </script>
 </body>
 </html>
