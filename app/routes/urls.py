@@ -70,9 +70,7 @@ def list_or_create_urls():
             if not user:
                 return jsonify({"error": "User not found"}), 404
 
-        if custom_short_code:
-            if Url.get_or_none(Url.short_code == custom_short_code):
-                return jsonify({"error": "Short code already in use"}), 409
+        if custom_short_code and not Url.get_or_none(Url.short_code == custom_short_code):
             short_code = custom_short_code
         else:
             for _ in range(10):
@@ -257,7 +255,7 @@ def redirect_short(short_code):
     if not url:
         return jsonify({"error": "Short URL not found"}), 404
     if not url.is_active:
-        return jsonify({"error": "This short URL is no longer active"}), 410
+        return jsonify({"error": "URL not found"}), 404
 
     # Record click event
     Event.create(
