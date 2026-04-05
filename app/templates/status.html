@@ -87,7 +87,7 @@
     /* ── HERO ── */
     .hero {
       position: relative; overflow: hidden;
-      display: flex; align-items: center; gap: 18px;
+      display: flex; align-items: stretch; gap: 18px;
       padding: 28px 30px; border-radius: 18px;
       border: 1px solid rgba(36,51,80,0.95);
       background:
@@ -115,12 +115,23 @@
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.06);
     }
+    .hero-main {
+      display: flex; align-items: center; gap: 18px;
+      flex: 1; min-width: 0;
+    }
+    .hero-text { flex: 1; min-width: 0; }
     .hero-icon svg { width: 30px; height: 30px; }
-    .hero-text h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.35px; }
+    .hero-text h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.35px; line-height: 1.08; }
     .hero-text p  { font-size: 14px; color: var(--muted); margin-top: 6px; line-height: 1.55; max-width: 470px; }
     .hero.up   .hero-text h1 { color: var(--green); }
     .hero.down .hero-text h1 { color: var(--red); }
-    .hero-slo { margin-left: auto; text-align: right; }
+    .hero-slo {
+      margin-left: auto; text-align: right; flex-shrink: 0;
+      min-width: 132px;
+      display: flex; flex-direction: column; justify-content: center;
+      padding-left: 18px;
+      border-left: 1px solid rgba(255,255,255,0.06);
+    }
     .hero-slo .pct   { font-size: 34px; font-weight: 800; line-height: 1; color: #f8fafc; }
     .hero-slo .label { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
@@ -311,7 +322,8 @@
 
     @media (max-width: 640px) {
       .hero { flex-wrap: wrap; }
-      .hero-slo { margin-left: 0; text-align: left; width: 100%; padding-top: 8px; }
+      .hero-main { width: 100%; }
+      .hero-slo { margin-left: 0; text-align: left; width: 100%; padding-top: 8px; padding-left: 0; border-left: none; }
       .hero-text h1 { font-size: 24px; }
       .header-meta { font-size: 12px; padding: 7px 10px; }
       .logo-badge { display: none; }
@@ -350,10 +362,12 @@
   <div class="status-top">
     <!-- HERO -->
     <div class="hero" id="hero">
-      <div class="hero-icon" id="hero-icon">…</div>
-      <div class="hero-text">
-        <h1 id="hero-title">Checking status…</h1>
-        <p id="hero-sub">Fetching current data</p>
+      <div class="hero-main">
+        <div class="hero-icon" id="hero-icon">…</div>
+        <div class="hero-text">
+          <h1 id="hero-title">Checking status…</h1>
+          <p id="hero-sub">Fetching current data</p>
+        </div>
       </div>
       <div class="hero-slo">
         <div class="pct" id="uptime-pct">—</div>
@@ -595,7 +609,16 @@
     // Incidents
     const list = document.getElementById("incidents-list");
     if (!incidents || incidents.length === 0) {
-      list.innerHTML = `<div class="no-incidents">🎉 No incidents recorded. All clear.</div>`;
+      list.innerHTML = `<div class="no-incidents">
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;color:#60a5fa">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L4 6v6c0 5.2 3.4 9.8 8 11 4.6-1.2 8-5.8 8-11V6l-8-4z"></path>
+            <polyline points="8.5 12 11 14.5 15.5 10"></polyline>
+          </svg>
+          <span style="font-weight:700;color:#dbeafe">No incidents recorded</span>
+        </div>
+        <div>System looks clean right now.</div>
+      </div>`;
     } else {
       const typeLabel = t => t === "service_down" ? "Service Down" : "High Error Rate";
       list.innerHTML = `<div class="incidents">` + incidents.slice(0, 10).map(inc => {

@@ -515,6 +515,7 @@
       display: inline-flex; align-items: center; gap: 8px;
       font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
       color: #fbbf24; margin-bottom: 12px;
+      font-family: "SF Mono","Fira Code",monospace;
     }
     .chaos-kicker-dot {
       width: 7px; height: 7px; border-radius: 50%;
@@ -526,8 +527,8 @@
       margin-bottom: 10px;
     }
     .chaos-hero-sub {
-      font-size: 14px; color: var(--faint); line-height: 1.65;
-      max-width: 680px;
+      font-size: 13px; color: var(--faint); line-height: 1.55;
+      max-width: 560px;
     }
     .chaos-hero-badge {
       display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0;
@@ -541,25 +542,26 @@
     }
     .chaos-hero-metrics {
       display: grid; grid-template-columns: repeat(4, 1fr);
-      gap: 14px; margin-top: 20px;
+      gap: 12px; margin-top: 18px;
     }
     .chaos-mini {
       background: rgba(8,13,24,0.44);
       border: 1px solid rgba(36,51,80,0.9);
       border-radius: 12px;
-      padding: 14px 15px;
-      min-height: 88px;
+      padding: 12px 13px;
+      min-height: 76px;
     }
     .chaos-mini-label {
       font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
       color: var(--muted); margin-bottom: 10px;
     }
     .chaos-mini-val {
-      font-size: 16px; font-weight: 700; color: #f8fafc; line-height: 1.2;
-      margin-bottom: 5px;
+      font-size: 15px; font-weight: 700; color: #f8fafc; line-height: 1.2;
+      margin-bottom: 3px;
+      font-family: "SF Mono","Fira Code",monospace;
     }
     .chaos-mini-sub {
-      font-size: 12px; color: var(--faint); line-height: 1.45;
+      font-size: 11px; color: var(--muted); line-height: 1.35;
     }
 
     .chaos-status-wrap {
@@ -588,7 +590,7 @@
       font-size: 15px; font-weight: 700; color: #f1f5f9;
     }
     .chaos-status-sub {
-      font-size: 12px; color: var(--muted);
+      font-size: 11px; color: var(--muted); font-family: "SF Mono","Fira Code",monospace;
     }
     .chaos-status-bar.chaos-hot {
       border-color: rgba(239,68,68,0.36);
@@ -633,7 +635,8 @@
       font-size: 15px; font-weight: 700; color: #f8fafc; margin-bottom: 4px;
     }
     .chaos-traffic-desc {
-      font-size: 12px; color: var(--muted); line-height: 1.55; max-width: 440px;
+      font-size: 11px; color: var(--muted); line-height: 1.45; max-width: 360px;
+      font-family: "SF Mono","Fira Code",monospace;
     }
 
     .chaos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
@@ -1287,7 +1290,7 @@
           <div class="chaos-hero-copy">
             <div class="chaos-kicker"><span class="chaos-kicker-dot"></span>Controlled Failure Lab</div>
             <div class="chaos-hero-title">Chaos Engineering</div>
-            <div class="chaos-hero-sub">Stress the system on purpose, watch detection fire in real time, and validate that self-healing, alerting, and the dashboard all react the way an incident-response system should.</div>
+            <div class="chaos-hero-sub">Break things on purpose. Watch alerts, healing, logs, and SLO react live.</div>
           </div>
           <div class="chaos-hero-badge">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L3 7v5c0 5.25 3.8 10.15 9 11.35C17.2 22.15 21 17.25 21 12V7L12 2z"/></svg>
@@ -1297,24 +1300,24 @@
 
         <div class="chaos-hero-metrics">
           <div class="chaos-mini">
-            <div class="chaos-mini-label">Primary Goal</div>
-            <div class="chaos-mini-val">Trigger realistic failures</div>
-            <div class="chaos-mini-sub">Latency, errors, DB loss, CPU pressure, and process death.</div>
+            <div class="chaos-mini-label">Modes</div>
+            <div class="chaos-mini-val">latency / 5xx / db</div>
+            <div class="chaos-mini-sub">plus cpu + crash</div>
           </div>
           <div class="chaos-mini">
-            <div class="chaos-mini-label">What To Watch</div>
-            <div class="chaos-mini-val">Health, logs, SLO, incidents</div>
-            <div class="chaos-mini-sub">Flip to Overview and Data while experiments run to see signal quality.</div>
+            <div class="chaos-mini-label">Watch</div>
+            <div class="chaos-mini-val">health / logs / slo</div>
+            <div class="chaos-mini-sub">overview + data tabs</div>
           </div>
           <div class="chaos-mini">
             <div class="chaos-mini-label">Alert Path</div>
-            <div class="chaos-mini-val">Discord + dashboard state</div>
-            <div class="chaos-mini-sub">High error rate, burn rate, and service-down monitors should fire.</div>
+            <div class="chaos-mini-val">discord + ui</div>
+            <div class="chaos-mini-sub">burn / down / error rate</div>
           </div>
           <div class="chaos-mini">
-            <div class="chaos-mini-label">Recovery Model</div>
-            <div class="chaos-mini-val">Self-healing validation</div>
-            <div class="chaos-mini-sub">Use the remediation log below to confirm the system repaired itself.</div>
+            <div class="chaos-mini-label">Recovery</div>
+            <div class="chaos-mini-val">self-heal log</div>
+            <div class="chaos-mini-sub">confirm restarts below</div>
           </div>
         </div>
       </div>
@@ -1328,7 +1331,7 @@
             <div class="chaos-status-copy">
               <span class="chaos-status-label">Experiment Status</span>
               <span class="chaos-status-text" id="chaos-status-text">No experiments running — system nominal</span>
-              <span class="chaos-status-sub">Detection should light up here within seconds when a test is active.</span>
+              <span class="chaos-status-sub">awaiting fault injection...</span>
             </div>
           </div>
           <span class="chaos-active-pill" id="chaos-active-list"></span>
@@ -1347,7 +1350,7 @@
             </div>
             <div>
               <div class="chaos-traffic-title">Traffic Generator</div>
-              <div class="chaos-traffic-desc">Generate synthetic user-facing traffic so chaos effects show up in logs, charts, and alerts instead of staying invisible in the background.</div>
+              <div class="chaos-traffic-desc">synthetic requests so the lab lights up fast.</div>
             </div>
           </div>
           <button class="chaos-btn chaos-btn-warn" onclick="chaosAction('traffic',{duration_s:60,rps:5})">Generate 60s @ 5 req/s</button>
