@@ -1,3 +1,4 @@
+import json
 import os
 from functools import wraps
 
@@ -55,3 +56,26 @@ def logout():
 @_login_required
 def home():
     return render_template("dashboard.html")
+
+
+@dashboard_bp.route("/dashboard/history")
+@_login_required
+def history():
+    """Read the full log file and return up to 10 000 entries for chart seeding."""
+    log_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "logs", "app.log")
+    )
+    entries = []
+    try:
+        with open(log_path) as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        entries.append(json.loads(line))
+                    except json.JSONDecodeError:
+                        pass
+    except FileNotFoundError:
+        pass
+    from flask import jsonify
+    return jsonify(entries[-10_000:])
