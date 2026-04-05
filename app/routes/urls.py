@@ -44,8 +44,8 @@ def _url_to_dict(url):
 def list_or_create_urls():
     if request.method == "POST":
         data = request.get_json(silent=True)
-        if not data:
-            return jsonify({"error": "Request body must be JSON"}), 400
+        if not data or not isinstance(data, dict):
+            return jsonify({"error": "Request body must be a JSON object"}), 400
 
         original_url = data.get("url") or data.get("original_url")
         user_id = data.get("user_id")
@@ -54,7 +54,12 @@ def list_or_create_urls():
         if not original_url:
             return jsonify({"error": "url is required"}), 400
 
-        if user_id:
+        if not isinstance(original_url, str):
+            return jsonify({"error": "url must be a string"}), 400
+
+        if user_id is not None:
+            if not isinstance(user_id, int):
+                return jsonify({"error": "user_id must be an integer"}), 400
             user = User.get_or_none(User.id == user_id)
             if not user:
                 return jsonify({"error": "User not found"}), 404
@@ -103,6 +108,10 @@ def list_or_create_urls():
     if is_active is not None:
         query = query.where(Url.is_active == (is_active.lower() in ("true", "1")))
 
+    short_code = request.args.get("short_code")
+    if short_code is not None:
+        query = query.where(Url.short_code == short_code)
+
     return jsonify([_url_to_dict(u) for u in query])
 
 
@@ -117,8 +126,8 @@ def get_url(url_id):
 @urls_bp.route("/shorten", methods=["POST"])
 def shorten_url():
     data = request.get_json(silent=True)
-    if not data:
-        return jsonify({"error": "Request body must be JSON"}), 400
+    if not data or not isinstance(data, dict):
+        return jsonify({"error": "Request body must be a JSON object"}), 400
 
     original_url = data.get("url") or data.get("original_url")
     user_id = data.get("user_id")
@@ -127,7 +136,12 @@ def shorten_url():
     if not original_url:
         return jsonify({"error": "url is required"}), 400
 
-    if user_id:
+    if not isinstance(original_url, str):
+        return jsonify({"error": "url must be a string"}), 400
+
+    if user_id is not None:
+        if not isinstance(user_id, int):
+            return jsonify({"error": "user_id must be an integer"}), 400
         user = User.get_or_none(User.id == user_id)
         if not user:
             return jsonify({"error": "User not found"}), 404
@@ -175,10 +189,12 @@ def update_url(url_id):
         return jsonify({"error": "URL not found"}), 404
 
     data = request.get_json(silent=True)
-    if not data:
-        return jsonify({"error": "Request body must be JSON"}), 400
+    if not data or not isinstance(data, dict):
+        return jsonify({"error": "Request body must be a JSON object"}), 400
 
     if "original_url" in data:
+        if not isinstance(data["original_url"], str):
+            return jsonify({"error": "original_url must be a string"}), 400
         url.original_url = data["original_url"]
     if "title" in data:
         url.title = data["title"]
@@ -238,7 +254,7 @@ def redirect_short(short_code):
         }),
     )
 
-    return redirect(url.original_url, code=302)
+    return redirect(url.original_url, code=301)
 
 
 @urls_bp.route("/urls/bulk", methods=["POST"])
