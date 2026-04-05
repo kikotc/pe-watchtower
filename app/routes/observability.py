@@ -177,6 +177,57 @@ def uptime_history():
     return jsonify(result)
 
 
+@observability_bp.route("/error-classification")
+def error_classification():
+    """Classify 500 errors from the log buffer by root cause."""
+    buf = get_log_buffer()
+
+    # Classify rules: (label, keywords to match in exception field)
+    RULES = [
+        ("db_unavailable",   ["OperationalError", "InterfaceError", "connection", "SSL connection"]),
+        ("data_integrity",   ["IntegrityError", "unique", "NOT NULL", "duplicate"]),
+        ("timeout",          ["timeout", "Timeout", "timed out"]),
+        ("connection_error", ["ConnectionError", "ConnectionRefused", "NewConnectionError"]),
+        ("not_found",        ["404", "not found", "DoesNotExist"]),
+    ]
+
+    counts: dict[str, int] = {}
+    endpoints: dict[str, int] = {}
+    unclassified = 0
+
+    for entry in buf:
+        if entry.get("status", 0) < 500:
+            continue
+        exc = entry.get("exception", "") or ""
+        path = entry.get("path", "unknown")
+
+        matched = False
+        for label, keywords in RULES:
+            if any(kw.lower() in exc.lower() for kw in keywords):
+                counts[label] = counts.get(label, 0) + 1
+                endpoints[path] = endpoints.get(path, 0) + 1
+                matched = True
+                break
+        if not matched and exc:
+            counts["unclassified"] = counts.get("unclassified", 0) + 1
+            endpoints[path] = endpoints.get(path, 0) + 1
+            unclassified += 1
+
+    total_errors = sum(counts.values())
+    top_endpoints = sorted(endpoints.items(), key=lambda x: x[1], reverse=True)[:5]
+
+    return jsonify({
+        "total_errors": total_errors,
+        "breakdown": [
+            {"type": k, "count": v, "percent": round(v / total_errors * 100, 1)}
+            for k, v in sorted(counts.items(), key=lambda x: x[1], reverse=True)
+        ] if total_errors else [],
+        "top_error_endpoints": [
+            {"path": p, "count": c} for p, c in top_endpoints
+        ],
+    })
+
+
 @observability_bp.route("/debug/crash")
 def debug_crash():
     """Test endpoint: returns 500 to trigger high-error-rate alerting."""

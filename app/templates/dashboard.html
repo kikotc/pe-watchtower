@@ -261,19 +261,49 @@
     .chart-axis    { display: flex; justify-content: space-between; padding: 4px 18px 12px; font-size: 11px; color: var(--muted); }
 
     /* ── SLO WIDGET ── */
-    .slo-card { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; }
+    .slo-card { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0; }
     .slo-main { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 22px 20px; border-right: 1px solid var(--border); gap: 6px; }
     .slo-pct  { font-size: 42px; font-weight: 700; line-height: 1; transition: color 0.4s; }
     .slo-lbl  { font-size: 12px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); }
     .slo-stat { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; padding: 18px 14px; border-right: 1px solid var(--border); }
     .slo-stat:last-child { border-right: none; }
-    .slo-stat-val { font-size: 22px; font-weight: 700; color: #f1f5f9; }
-    .slo-stat-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
+    .slo-stat-val { font-size: 22px; font-weight: 700; color: #f1f5f9; text-align: center; width: 100%; }
+    .slo-stat-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; text-align: center; }
     .slo-met-yes  { color: var(--green); }
     .slo-met-no   { color: var(--red); }
     .slo-budget-ok   { color: var(--green); }
     .slo-budget-warn { color: var(--yellow); }
     .slo-budget-crit { color: var(--red); }
+    .burn-ok   { color: var(--green); }
+    .burn-warn { color: var(--yellow); }
+    .burn-crit { color: #f97316; }
+    .burn-fire { color: var(--red); animation: ring-danger 1.4s ease-in-out infinite; }
+
+    /* ── RECENT FAILURES ── */
+    .failure-row {
+      display: grid; grid-template-columns: 60px 1fr 80px 100px;
+      gap: 12px; align-items: center;
+      padding: 9px 20px; border-bottom: 1px solid rgba(30,45,74,0.4);
+      font-family: "SF Mono","Fira Code",monospace; font-size: 12px;
+    }
+    .failure-row:last-child { border-bottom: none; }
+    .failure-status-5xx { color: var(--red); font-weight: 700; }
+    .failure-status-4xx { color: var(--yellow); font-weight: 700; }
+    .failure-path  { color: var(--faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .failure-dur   { color: var(--muted); text-align: right; }
+    .failure-time  { color: var(--muted); text-align: right; }
+
+    /* ── ERROR CLASSIFICATION ── */
+    .err-class-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 20px; border-bottom: 1px solid rgba(30,45,74,0.4);
+    }
+    .err-class-row:last-child { border-bottom: none; }
+    .err-class-label { font-size: 13px; font-family: "SF Mono","Fira Code",monospace; color: var(--faint); min-width: 160px; }
+    .err-class-bar-wrap { flex: 1; background: var(--border); border-radius: 4px; height: 6px; overflow: hidden; }
+    .err-class-bar { height: 100%; border-radius: 4px; background: var(--red); transition: width 0.4s; }
+    .err-class-count { font-size: 13px; color: var(--muted); min-width: 60px; text-align: right; }
+    .err-class-pct   { font-size: 12px; color: var(--muted); min-width: 44px; text-align: right; }
 
     /* ── INCIDENTS ── */
     .incident-row {
@@ -518,6 +548,10 @@
             <div class="slo-stat-lbl">Budget Used</div>
           </div>
           <div class="slo-stat">
+            <div class="slo-stat-val burn-ok" id="slo-burn">—x</div>
+            <div class="slo-stat-lbl">Burn Rate (1h)</div>
+          </div>
+          <div class="slo-stat">
             <div class="slo-stat-val" id="slo-errors">—</div>
             <div class="slo-stat-lbl">Error Reqs</div>
           </div>
@@ -535,6 +569,28 @@
         </div>
       </div>
 
+    </div>
+
+    <!-- RECENT FAILURES -->
+    <div class="panel-card">
+      <div class="panel-header">
+        <span class="section-title">Recent Failures</span>
+        <span class="section-badge" id="failures-badge">0</span>
+      </div>
+      <div id="failures-list">
+        <div class="empty-state">No failures recorded.</div>
+      </div>
+    </div>
+
+    <!-- ERROR CLASSIFICATION -->
+    <div class="panel-card">
+      <div class="panel-header">
+        <span class="section-title">Error Classification</span>
+        <span class="section-badge" id="err-class-total">0 errors</span>
+      </div>
+      <div id="err-class-list">
+        <div class="empty-state">No errors recorded.</div>
+      </div>
     </div>
 
     <!-- HISTORICAL GRAPHS -->
@@ -1141,10 +1197,11 @@
       const data = await safeFetch("/dashboard/slo");
       if (!data) return;
 
-      const pct     = data.uptime_pct ?? 100;
-      const met     = data.slo_met;
-      const budget  = data.budget_consumed ?? 0;
-      const errors  = data.error_requests ?? 0;
+      const pct    = data.uptime_pct ?? 100;
+      const met    = data.slo_met;
+      const budget = data.budget_consumed ?? 0;
+      const errors = data.error_requests ?? 0;
+      const burn   = data.burn_rate_1h ?? 0;
 
       const pctEl = document.getElementById("slo-pct");
       pctEl.textContent = pct.toFixed(3) + "%";
@@ -1159,7 +1216,69 @@
       budgetEl.className = "slo-stat-val " +
         (budget < 50 ? "slo-budget-ok" : budget < 90 ? "slo-budget-warn" : "slo-budget-crit");
 
+      const burnEl = document.getElementById("slo-burn");
+      burnEl.textContent = burn.toFixed(1) + "x";
+      burnEl.className = "slo-stat-val " + (
+        burn <= 1    ? "burn-ok"   :
+        burn <= 5    ? "burn-warn" :
+        burn <= 14.4 ? "burn-crit" : "burn-fire"
+      );
+
       document.getElementById("slo-errors").textContent = errors.toLocaleString();
+    }
+
+    async function pollFailures() {
+      const data = await safeFetch("/logs");
+      const list  = document.getElementById("failures-list");
+      const badge = document.getElementById("failures-badge");
+      if (!data) { list.innerHTML = '<div class="empty-state">No data.</div>'; return; }
+
+      const failures = data
+        .filter(e => e.message === "request" && e.status >= 400)
+        .slice(-20).reverse();
+
+      badge.textContent = failures.length;
+      if (!failures.length) {
+        list.innerHTML = '<div class="empty-state">No failures recorded. 🎉</div>';
+        return;
+      }
+
+      list.innerHTML = failures.map(e => {
+        const cls = e.status >= 500 ? "failure-status-5xx" : "failure-status-4xx";
+        const dur = e.duration_ms != null ? e.duration_ms + "ms" : "—";
+        const ts  = e.timestamp ? new Date(e.timestamp).toLocaleTimeString("en-US", { hour12: false }) : "—";
+        const rid = e.request_id ? `<span style="color:var(--muted);font-size:11px"> #${e.request_id}</span>` : "";
+        return `<div class="failure-row">
+          <span class="${cls}">${e.status}</span>
+          <span class="failure-path">${e.method || ""} ${e.path || "—"}${rid}</span>
+          <span class="failure-dur">${dur}</span>
+          <span class="failure-time">${ts}</span>
+        </div>`;
+      }).join("");
+    }
+
+    async function pollErrorClassification() {
+      const data = await safeFetch("/error-classification");
+      const list = document.getElementById("err-class-list");
+      if (!data || data.total_errors === 0) {
+        document.getElementById("err-class-total").textContent = "0 errors";
+        list.innerHTML = '<div class="empty-state">No errors recorded.</div>';
+        return;
+      }
+
+      document.getElementById("err-class-total").textContent = `${data.total_errors} errors`;
+      const maxCount = data.breakdown[0]?.count || 1;
+
+      list.innerHTML = data.breakdown.map(row => `
+        <div class="err-class-row">
+          <span class="err-class-label">${row.type}</span>
+          <div class="err-class-bar-wrap">
+            <div class="err-class-bar" style="width:${(row.count / maxCount * 100).toFixed(0)}%"></div>
+          </div>
+          <span class="err-class-count">${row.count}</span>
+          <span class="err-class-pct">${row.percent}%</span>
+        </div>
+      `).join("");
     }
 
     // ── /dashboard/incidents ─────────────────────────────────────────────────
@@ -1201,11 +1320,15 @@
     pollAppData();
     pollSLO();
     pollIncidents();
+    pollFailures();
+    pollErrorClassification();
     initFromHistory();
-    setInterval(fastPoll,       5000);
-    setInterval(pollAppData,   15000);
-    setInterval(pollSLO,       30000);
-    setInterval(pollIncidents, 30000);
+    setInterval(fastPoll,                5000);
+    setInterval(pollAppData,            15000);
+    setInterval(pollSLO,                30000);
+    setInterval(pollIncidents,          30000);
+    setInterval(pollFailures,            5000);
+    setInterval(pollErrorClassification, 30000);
 
     // ── Tab switching ─────────────────────────────────────────────────────────
     document.querySelectorAll(".tab-btn").forEach(btn => {

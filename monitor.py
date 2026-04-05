@@ -220,6 +220,57 @@ def check_error_rate() -> None:
 
 # ── Monitor loop ──────────────────────────────────────────────────────────────
 
+def check_burn_rate() -> None:
+    try:
+        r = requests.get(f"{BASE_URL}/logs", timeout=5)
+        if r.status_code != 200:
+            return
+        buf = r.json()
+    except Exception:
+        return
+
+    reqs = [e for e in buf if e.get("message") == "request"]
+    if not reqs:
+        return
+
+    now       = time.time()
+    target    = 99.9
+    allowed   = 1 - (target / 100)  # 0.001
+
+    window_1h = [e for e in reqs if iso_to_epoch(e.get("timestamp", "")) >= now - 3600]
+    if len(window_1h) < 5:
+        return
+
+    errors_1h = sum(1 for e in window_1h if e.get("status", 0) >= 500)
+    error_rate = errors_1h / len(window_1h)
+    burn_rate  = round(error_rate / allowed, 2) if allowed else 0.0
+
+    # Reset if healthy
+    if burn_rate <= 14.4:
+        _last_alert.pop("burn_rate", None)
+        return
+
+    if _should_alert("burn_rate"):
+        # Estimate hours until budget exhausted (monthly budget = 43.8 min)
+        monthly_budget_hours = (1 - target / 100) * 24 * 30
+        hours_left = round(monthly_budget_hours / (burn_rate * allowed * 24), 1) if burn_rate > 0 else "∞"
+        send_discord({
+            "title": "🔥  SLO Burn Rate Critical",
+            "description": f"Error budget is being consumed **{burn_rate}x faster** than expected. At this rate, the monthly SLO budget will be exhausted soon.",
+            "color": 0x9B59B6,  # purple
+            "fields": [
+                {"name": "Burn Rate (1h)",  "value": f"`{burn_rate}x`",          "inline": True},
+                {"name": "SLO Target",      "value": f"`{target}%`",              "inline": True},
+                {"name": "Errors (1h)",     "value": f"`{errors_1h}/{len(window_1h)}`", "inline": True},
+                {"name": "Critical Threshold", "value": "`14.4x` (Google SRE)", "inline": True},
+                {"name": "Est. Budget Exhaustion", "value": f"`{hours_left}h`",  "inline": True},
+            ],
+            "footer":    {"text": "Watchtower Alerting"},
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        })
+        logger.error("Alert fired: burn_rate — %.1fx", burn_rate)
+
+
 def _monitor_loop() -> None:
     time.sleep(STARTUP_DELAY)
     logger.info("Alerting monitor started — watching %s every %ss", BASE_URL, CHECK_INTERVAL)
@@ -227,6 +278,7 @@ def _monitor_loop() -> None:
         try:
             check_service_down()
             check_error_rate()
+            check_burn_rate()
         except Exception:
             logger.exception("Unexpected error in monitor loop")
         time.sleep(CHECK_INTERVAL)
@@ -382,14 +434,33 @@ def history():
 @ui.route("/dashboard/slo")
 @_login_required
 def dashboard_slo():
-    entries = _read_log_file()
-    reqs    = [e for e in entries if e.get("method") and e.get("status")]
-    total   = len(reqs)
-    errors  = sum(1 for r in reqs if r.get("status", 0) >= 500)
-    uptime  = round((total - errors) / total * 100, 3) if total else 100.0
-    target  = 99.9
+    entries  = _read_log_file()
+    reqs     = [e for e in entries if e.get("method") and e.get("status")]
+    total    = len(reqs)
+    errors   = sum(1 for r in reqs if r.get("status", 0) >= 500)
+    uptime   = round((total - errors) / total * 100, 3) if total else 100.0
+    target   = 99.9
     budget_total    = round(100 - target, 3)
     budget_consumed = round((100 - uptime) / budget_total * 100, 1) if budget_total else 0
+
+    # Burn rate — compare last 1h vs last 6h error rate
+    # A burn rate of 1.0 = exactly consuming budget at expected pace
+    # >14.4 = will exhaust monthly budget in <2 days (Google SRE threshold)
+    now    = time.time()
+    window_1h  = [r for r in reqs if iso_to_epoch(r.get("timestamp", "")) >= now - 3600]
+    window_6h  = [r for r in reqs if iso_to_epoch(r.get("timestamp", "")) >= now - 21600]
+
+    def _burn(window):
+        if not window:
+            return 0.0
+        err = sum(1 for r in window if r.get("status", 0) >= 500)
+        error_rate = err / len(window)
+        allowed_error_rate = 1 - (target / 100)  # 0.001 for 99.9%
+        return round(error_rate / allowed_error_rate, 2) if allowed_error_rate else 0.0
+
+    burn_1h = _burn(window_1h)
+    burn_6h = _burn(window_6h)
+
     return jsonify({
         "uptime_pct":      uptime,
         "slo_target":      target,
@@ -397,7 +468,19 @@ def dashboard_slo():
         "total_requests":  total,
         "error_requests":  errors,
         "budget_consumed": min(budget_consumed, 999),
+        "burn_rate_1h":    burn_1h,
+        "burn_rate_6h":    burn_6h,
+        "burn_alert":      burn_1h > 14.4,  # Google SRE critical threshold
     })
+
+
+@ui.route("/error-classification")
+def error_classification_proxy():
+    try:
+        r = requests.get(f"{BASE_URL}/error-classification", timeout=5)
+        return jsonify(r.json()), r.status_code
+    except Exception:
+        return jsonify({"total_errors": 0, "breakdown": [], "top_error_endpoints": []}), 200
 
 
 @ui.route("/dashboard/incidents")
