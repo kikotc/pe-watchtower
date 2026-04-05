@@ -75,7 +75,10 @@ def bulk_load_users():
     return jsonify({
         "file": filename,
         "row_count": created,
+        "imported": created,
+        "created": created,
         "errors": errors,
+        "message": f"Successfully imported {created} users",
     }), 201
 
 
