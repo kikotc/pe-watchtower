@@ -114,8 +114,8 @@ def incidents():
         {
             "id": i.id,
             "type": i.incident_type,
-            "started_at": i.started_at.isoformat(),
-            "resolved_at": i.resolved_at.isoformat() if i.resolved_at else None,
+            "started_at": i.started_at.isoformat() + "Z",
+            "resolved_at": (i.resolved_at.isoformat() + "Z") if i.resolved_at else None,
             "duration_seconds": i.duration_seconds,
             "details": i.details,
         }

@@ -25,13 +25,13 @@ load_dotenv()
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-CHECK_INTERVAL     = 15
-STARTUP_DELAY      = 3
-ALERT_COOLDOWN     = 300
+CHECK_INTERVAL       = int(os.environ.get("MONITOR_INTERVAL", 15))
+STARTUP_DELAY        = 3
+ALERT_COOLDOWN       = 300
 ERROR_RATE_THRESHOLD = 0.5
-ERROR_RATE_WINDOW  = 120
-BASE_URL           = "http://localhost:5001"
-UI_PORT            = 5002
+ERROR_RATE_WINDOW    = 120
+BASE_URL             = os.environ.get("APP_URL", "http://localhost:5001")
+UI_PORT              = int(os.environ.get("MONITOR_PORT", 5002))
 
 _SECRET   = os.environ.get("DASHBOARD_SECRET", "dashboard-dev-secret-change-me")
 _PASSWORD = os.environ.get("DASHBOARD_PASSWORD", "admin")
@@ -340,6 +340,33 @@ def incidents_proxy():
 def uptime_history_proxy():
     try:
         r = requests.get(f"{BASE_URL}/uptime-history", timeout=5)
+        return jsonify(r.json()), r.status_code
+    except Exception:
+        return jsonify([]), 200
+
+
+@ui.route("/urls")
+def urls_proxy():
+    try:
+        r = requests.get(f"{BASE_URL}/urls", timeout=5)
+        return jsonify(r.json()), r.status_code
+    except Exception:
+        return jsonify([]), 200
+
+
+@ui.route("/users")
+def users_proxy():
+    try:
+        r = requests.get(f"{BASE_URL}/users", timeout=5)
+        return jsonify(r.json()), r.status_code
+    except Exception:
+        return jsonify([]), 200
+
+
+@ui.route("/events")
+def events_proxy():
+    try:
+        r = requests.get(f"{BASE_URL}/events", timeout=5)
         return jsonify(r.json()), r.status_code
     except Exception:
         return jsonify([]), 200
