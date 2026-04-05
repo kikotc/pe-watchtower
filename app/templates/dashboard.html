@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Watchtower — Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #080d18;
+      --surface:   #0f1629;
+      --surface2:  #131d35;
+      --border:    #1e2d4a;
+      --border2:   #243350;
+      --blue:      #3b82f6;
+      --green:     #10b981;
+      --yellow:    #f59e0b;
+      --red:       #ef4444;
+      --text:      #e2e8f0;
+      --muted:     #64748b;
+      --faint:     #94a3b8;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 16px;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      height: 62px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon { font-size: 22px; line-height: 1; }
+
+    .logo-title {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+      color: #f1f5f9;
+    }
+
+    .logo-badge {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--blue);
+      background: rgba(59,130,246,0.12);
+      border: 1px solid rgba(59,130,246,0.25);
+      border-radius: 4px;
+      padding: 3px 8px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    #last-updated { font-size: 13px; color: var(--muted); }
+
+    .btn-logout {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      padding: 6px 14px;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .btn-logout:hover { color: var(--text); border-color: var(--faint); }
+
+    /* ── MAIN LAYOUT ── */
+    main {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 26px 32px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    /* ── STATUS BANNER ── */
+    #status-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-size: 15px;
+      font-weight: 500;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    #status-banner.healthy  { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.06); }
+    #status-banner.degraded { border-color: rgba(239,68,68,0.4);  background: rgba(239,68,68,0.06); }
+
+    .pulse-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+      animation: pulse 2s infinite;
+    }
+    .pulse-dot.red { background: var(--red); animation: none; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.45; transform: scale(0.82); }
+    }
+
+    #status-text { color: var(--green); }
+    #status-text.red { color: var(--red); }
+    .status-uptime { color: var(--muted); margin-left: auto; font-size: 13px; font-weight: 400; }
+
+    /* ── GRIDS ── */
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+
+    /* ── BASE CARD ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px 24px;
+    }
+
+    /* ── METRIC CARD (ring layout) ── */
+    .metric-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 26px 20px 20px;
+    }
+
+    .ring-wrap {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      flex-shrink: 0;
+    }
+
+    .ring-wrap svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .ring-bg {
+      fill: none;
+      stroke: var(--border2);
+      stroke-width: 9;
+    }
+
+    /* circumference of r=48: 2π×48 ≈ 301.6 */
+    .ring-fill {
+      fill: none;
+      stroke-width: 9;
+      stroke-linecap: round;
+      stroke-dasharray: 301.6;
+      stroke-dashoffset: 301.6;
+      transition: stroke-dashoffset 0.7s ease, stroke 0.4s ease;
+    }
+
+    .ring-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .ring-val {
+      font-size: 22px;
+      font-weight: 700;
+      color: #f1f5f9;
+      line-height: 1;
+    }
+
+    .ring-unit {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .metric-label {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .metric-sub {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      margin-top: -8px;
+    }
+
+    /* ── STAT CARDS ── */
+    .stat-card {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .icon-blue   { background: rgba(59,130,246,0.15); }
+    .icon-green  { background: rgba(16,185,129,0.15); }
+    .icon-purple { background: rgba(139,92,246,0.15); }
+
+    .stat-info .stat-num {
+      font-size: 28px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+    .stat-info .stat-lbl {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ── SECTION HEADER ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0;
+    }
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .section-badge {
+      font-size: 12px;
+      color: var(--blue);
+      background: rgba(59,130,246,0.1);
+      border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 4px;
+      padding: 3px 9px;
+    }
+
+    /* ── LOG FEED ── */
+    #log-feed {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    #log-list {
+      max-height: 340px;
+      overflow-y: auto;
+      padding: 6px 0;
+    }
+
+    #log-list::-webkit-scrollbar { width: 4px; }
+    #log-list::-webkit-scrollbar-track { background: transparent; }
+    #log-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+
+    .log-entry {
+      display: grid;
+      grid-template-columns: 88px 68px 58px 52px 1fr 76px;
+      gap: 10px;
+      align-items: center;
+      padding: 7px 20px;
+      font-family: "SF Mono", "Fira Code", "Menlo", monospace;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(30,45,74,0.5);
+      transition: background 0.15s;
+    }
+    .log-entry:last-child { border-bottom: none; }
+    .log-entry:hover { background: var(--surface2); }
+
+    .log-time  { color: var(--muted); }
+    .log-level {
+      font-weight: 600;
+      border-radius: 3px;
+      padding: 2px 6px;
+      text-align: center;
+      font-size: 11px;
+      letter-spacing: 0.3px;
+    }
+    .level-INFO    { color: #7dd3fc; background: rgba(125,211,252,0.1); }
+    .level-WARNING { color: var(--yellow); background: rgba(245,158,11,0.1); }
+    .level-ERROR   { color: var(--red); background: rgba(239,68,68,0.1); }
+    .level-DEBUG   { color: var(--muted); background: rgba(100,116,139,0.1); }
+
+    .log-method { color: var(--faint); }
+    .status-2xx { color: var(--green); }
+    .status-4xx { color: var(--yellow); }
+    .status-5xx { color: var(--red); }
+    .log-path   { color: #c4d4f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .log-dur    { color: var(--muted); text-align: right; }
+
+    /* ── EVENTS TABLE ── */
+    #events-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    th {
+      text-align: left;
+      padding: 11px 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 10px 20px;
+      font-size: 13px;
+      color: var(--faint);
+      border-bottom: 1px solid rgba(30,45,74,0.4);
+      font-family: "SF Mono", "Fira Code", "Menlo", monospace;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--surface2); }
+
+    .event-type {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .event-created { color: var(--green);  background: rgba(16,185,129,0.1); }
+    .event-deleted { color: var(--red);    background: rgba(239,68,68,0.1); }
+    .event-updated { color: var(--yellow); background: rgba(245,158,11,0.1); }
+    .event-other   { color: var(--muted);  background: rgba(100,116,139,0.1); }
+
+    .empty-state {
+      text-align: center;
+      padding: 36px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-left">
+      <div class="logo-icon">🛡</div>
+      <div class="logo-title">Watchtower</div>
+      <div class="logo-badge">Admin</div>
+    </div>
+    <div class="header-right">
+      <span id="last-updated">Loading…</span>
+      <a href="/dashboard/logout" class="btn-logout">Sign out</a>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- STATUS BANNER -->
+    <div id="status-banner">
+      <div class="pulse-dot" id="pulse"></div>
+      <span id="status-text">Checking…</span>
+      <span class="status-uptime" id="uptime-text"></span>
+    </div>
+
+    <!-- METRIC RINGS ROW -->
+    <div class="grid-4">
+
+      <!-- CPU -->
+      <div class="card metric-card">
+        <div class="ring-wrap">
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <circle class="ring-bg"   cx="60" cy="60" r="48"/>
+            <circle class="ring-fill" cx="60" cy="60" r="48" id="cpu-ring" stroke="var(--blue)"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-val" id="cpu-val">—</div>
+            <div class="ring-unit">%</div>
+          </div>
+        </div>
+        <div class="metric-label">CPU Usage</div>
+        <div class="metric-sub">System</div>
+      </div>
+
+      <!-- RAM -->
+      <div class="card metric-card">
+        <div class="ring-wrap">
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <circle class="ring-bg"   cx="60" cy="60" r="48"/>
+            <circle class="ring-fill" cx="60" cy="60" r="48" id="ram-ring" stroke="var(--green)"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-val" id="ram-pct">—</div>
+            <div class="ring-unit">%</div>
+          </div>
+        </div>
+        <div class="metric-label">Memory</div>
+        <div class="metric-sub" id="ram-val">— / — MB</div>
+      </div>
+
+      <!-- Process CPU -->
+      <div class="card metric-card">
+        <div class="ring-wrap">
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <circle class="ring-bg"   cx="60" cy="60" r="48"/>
+            <circle class="ring-fill" cx="60" cy="60" r="48" id="proc-cpu-ring" stroke="var(--yellow)"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-val" id="proc-cpu-val">—</div>
+            <div class="ring-unit">%</div>
+          </div>
+        </div>
+        <div class="metric-label">Process CPU</div>
+        <div class="metric-sub" id="proc-threads">— threads</div>
+      </div>
+
+      <!-- Process Memory -->
+      <div class="card metric-card">
+        <div class="ring-wrap">
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <circle class="ring-bg"   cx="60" cy="60" r="48"/>
+            <circle class="ring-fill" cx="60" cy="60" r="48" id="proc-mem-ring" stroke="var(--blue)"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-val" id="proc-mem-val">—</div>
+            <div class="ring-unit">MB</div>
+          </div>
+        </div>
+        <div class="metric-label">Process Mem</div>
+        <div class="metric-sub" id="proc-pid">PID —</div>
+      </div>
+
+    </div>
+
+    <!-- STATS ROW -->
+    <div class="grid-3">
+      <div class="card stat-card">
+        <div class="stat-icon icon-blue">👤</div>
+        <div class="stat-info">
+          <div class="stat-num" id="user-count">—</div>
+          <div class="stat-lbl">Total Users</div>
+        </div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-icon icon-green">🔗</div>
+        <div class="stat-info">
+          <div class="stat-num" id="url-count">—</div>
+          <div class="stat-lbl">Short URLs</div>
+        </div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-icon icon-purple">⚡</div>
+        <div class="stat-info">
+          <div class="stat-num" id="event-count">—</div>
+          <div class="stat-lbl">Recent Events</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIVE LOG FEED -->
+    <div id="log-feed">
+      <div class="panel-header section-header">
+        <span class="section-title">Live Log Feed</span>
+        <span class="section-badge">● Live</span>
+      </div>
+      <div id="log-list">
+        <div class="empty-state">Loading logs…</div>
+      </div>
+    </div>
+
+    <!-- EVENTS TABLE -->
+    <div id="events-section">
+      <div class="panel-header section-header">
+        <span class="section-title">Recent Events</span>
+        <span class="section-badge">Last 10</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>URL ID</th>
+            <th>User ID</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+        <tbody id="events-tbody">
+          <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:28px">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
+  <script>
+    const CIRCUMFERENCE = 301.6; // 2π × r=48
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+
+    function fmtUptime(secs) {
+      const h = Math.floor(secs / 3600);
+      const m = Math.floor((secs % 3600) / 60);
+      const s = secs % 60;
+      if (h > 0) return `${h}h ${m}m ${s}s`;
+      if (m > 0) return `${m}m ${s}s`;
+      return `${s}s`;
+    }
+
+    function fmtTime(iso) {
+      try { return new Date(iso).toLocaleTimeString("en-US", { hour12: false }); }
+      catch { return iso; }
+    }
+
+    function setRing(ringId, pct) {
+      const el = document.getElementById(ringId);
+      if (!el) return;
+      const clamped = Math.min(Math.max(pct, 0), 100);
+      el.style.strokeDashoffset = CIRCUMFERENCE * (1 - clamped / 100);
+      if (clamped < 50)      el.style.stroke = "var(--green)";
+      else if (clamped < 75) el.style.stroke = "var(--yellow)";
+      else                   el.style.stroke = "var(--red)";
+    }
+
+    function statusClass(code) {
+      if (code >= 500) return "status-5xx";
+      if (code >= 400) return "status-4xx";
+      return "status-2xx";
+    }
+
+    function eventClass(type) {
+      if (!type) return "event-other";
+      const t = type.toLowerCase();
+      if (t.includes("creat")) return "event-created";
+      if (t.includes("delet")) return "event-deleted";
+      if (t.includes("updat")) return "event-updated";
+      return "event-other";
+    }
+
+    // ── fetch /health ─────────────────────────────────────────────────────────
+    async function pollHealth() {
+      try {
+        const r    = await fetch("/health");
+        const data = await r.json();
+        const ok   = r.ok && data.status === "ok";
+        document.getElementById("status-banner").className = ok ? "healthy" : "degraded";
+        document.getElementById("pulse").className = "pulse-dot" + (ok ? "" : " red");
+        const txt = document.getElementById("status-text");
+        txt.className   = ok ? "" : "red";
+        txt.textContent = ok ? "All Systems Operational" : "Service Degraded";
+      } catch {
+        const txt = document.getElementById("status-text");
+        txt.className   = "red";
+        txt.textContent = "Unreachable";
+      }
+    }
+
+    // ── fetch /metrics ────────────────────────────────────────────────────────
+    async function pollMetrics() {
+      try {
+        const data = await fetch("/metrics").then(r => r.json());
+
+        document.getElementById("uptime-text").textContent =
+          "Uptime: " + fmtUptime(data.uptime_seconds);
+
+        // System CPU
+        const cpu = data.cpu_percent ?? 0;
+        document.getElementById("cpu-val").textContent = cpu.toFixed(1);
+        setRing("cpu-ring", cpu);
+
+        // RAM
+        const ramUsed  = data.memory?.used_mb  ?? 0;
+        const ramTotal = data.memory?.total_mb  ?? 1;
+        const ramPct   = data.memory?.percent   ?? 0;
+        document.getElementById("ram-pct").textContent = ramPct.toFixed(1);
+        document.getElementById("ram-val").textContent =
+          `${Math.round(ramUsed)} / ${Math.round(ramTotal)} MB`;
+        setRing("ram-ring", ramPct);
+
+        // Process CPU
+        const pCpu = data.process?.cpu_percent ?? 0;
+        document.getElementById("proc-cpu-val").textContent = pCpu.toFixed(1);
+        document.getElementById("proc-threads").textContent =
+          `${data.process?.threads ?? "—"} threads`;
+        setRing("proc-cpu-ring", pCpu);
+
+        // Process memory (ring relative to 500 MB max scale)
+        const pMem    = data.process?.memory_mb ?? 0;
+        const pMemPct = Math.min((pMem / 500) * 100, 100);
+        document.getElementById("proc-mem-val").textContent = pMem.toFixed(1);
+        document.getElementById("proc-pid").textContent =
+          `PID ${data.process?.pid ?? "—"}`;
+        setRing("proc-mem-ring", pMemPct);
+
+      } catch (e) { console.warn("metrics error", e); }
+    }
+
+    // ── fetch /logs ───────────────────────────────────────────────────────────
+    async function pollLogs() {
+      try {
+        const logs   = await fetch("/logs").then(r => r.json());
+        const recent = [...logs].reverse().slice(0, 50);
+        const list   = document.getElementById("log-list");
+
+        if (!recent.length) {
+          list.innerHTML = '<div class="empty-state">No logs yet.</div>';
+          return;
+        }
+
+        list.innerHTML = recent.map(e => {
+          const lvl     = e.level || "INFO";
+          const time    = fmtTime(e.timestamp);
+          const method  = e.method || "—";
+          const path    = e.path || e.message || "—";
+          const status  = e.status ?? "";
+          const dur     = e.duration_ms != null ? e.duration_ms + "ms" : "";
+          const stClass = status ? statusClass(status) : "";
+          return `<div class="log-entry">
+            <span class="log-time">${time}</span>
+            <span class="log-level level-${lvl}">${lvl}</span>
+            <span class="log-method">${method}</span>
+            <span class="${stClass}">${status}</span>
+            <span class="log-path">${path}</span>
+            <span class="log-dur">${dur}</span>
+          </div>`;
+        }).join("");
+
+      } catch (e) { console.warn("logs error", e); }
+    }
+
+    // ── fetch counts + events ─────────────────────────────────────────────────
+    async function pollAppData() {
+      try {
+        const [users, urls, events] = await Promise.all([
+          fetch("/users").then(r => r.json()),
+          fetch("/urls").then(r => r.json()),
+          fetch("/events").then(r => r.json()),
+        ]);
+
+        document.getElementById("user-count").textContent  = Array.isArray(users)  ? users.length  : "—";
+        document.getElementById("url-count").textContent   = Array.isArray(urls)   ? urls.length   : "—";
+        document.getElementById("event-count").textContent = Array.isArray(events) ? events.length : "—";
+
+        const recent = Array.isArray(events) ? events.slice(0, 10) : [];
+        const tbody  = document.getElementById("events-tbody");
+
+        if (!recent.length) {
+          tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No events yet.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = recent.map(ev => {
+          const type  = ev.event_type || ev.type || "unknown";
+          const urlId = ev.url_id ?? ev.url ?? "—";
+          const uid   = ev.user_id ?? ev.user ?? "—";
+          const ts    = ev.timestamp ? fmtTime(ev.timestamp) : "—";
+          return `<tr>
+            <td><span class="event-type ${eventClass(type)}">${type}</span></td>
+            <td>${urlId}</td>
+            <td>${uid}</td>
+            <td>${ts}</td>
+          </tr>`;
+        }).join("");
+
+      } catch (e) { console.warn("app data error", e); }
+    }
+
+    // ── polling ───────────────────────────────────────────────────────────────
+    function updateTimestamp() {
+      document.getElementById("last-updated").textContent =
+        "Updated " + new Date().toLocaleTimeString("en-US", { hour12: false });
+    }
+
+    async function fastPoll() {
+      await Promise.all([pollHealth(), pollMetrics(), pollLogs()]);
+      updateTimestamp();
+    }
+
+    fastPoll();
+    pollAppData();
+    setInterval(fastPoll,    5000);
+    setInterval(pollAppData, 15000);
+  </script>
+</body>
+</html>
