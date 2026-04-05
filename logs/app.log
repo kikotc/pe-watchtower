@@ -1,0 +1,15 @@
+{"timestamp": "2026-04-04T23:46:25.485149+00:00", "level": "INFO", "message": "App started"}
+{"timestamp": "2026-04-04T23:46:42.845270+00:00", "level": "INFO", "message": "App started", "taskName": null}
+{"timestamp": "2026-04-04T23:46:50.119486+00:00", "level": "INFO", "message": "App started", "taskName": null}
+{"timestamp": "2026-04-04T23:50:04.643166+00:00", "level": "INFO", "message": "App started", "taskName": null}
+{"timestamp": "2026-04-04T23:50:04.797008+00:00", "level": "INFO", "message": "App started", "taskName": null}
+{"timestamp": "2026-04-04T23:50:13.755621+00:00", "level": "INFO", "message": "App started", "taskName": null}
+{"timestamp": "2026-04-04T23:50:24.030242+00:00", "level": "INFO", "message": "App started", "taskName": null}
+{"timestamp": "2026-04-04T23:50:24.182272+00:00", "level": "INFO", "message": "App started", "taskName": null}
+{"timestamp": "2026-04-04T23:51:16.832503+00:00", "level": "INFO", "message": "App started", "taskName": null}
+{"timestamp": "2026-04-04T23:51:26.196369+00:00", "level": "INFO", "message": "App started", "taskName": null}
+{"timestamp": "2026-04-04T23:51:26.339683+00:00", "level": "INFO", "message": "App started", "taskName": null}
+{"timestamp": "2026-04-04T23:51:30.386952+00:00", "level": "INFO", "message": "request", "taskName": null, "method": "GET", "path": "/metrics", "status": 200, "duration_ms": 210.8}
+{"timestamp": "2026-04-04T23:51:30.426577+00:00", "level": "INFO", "message": "request", "taskName": null, "method": "GET", "path": "/health", "status": 200, "duration_ms": 0.11}
+{"timestamp": "2026-04-04T23:51:30.451448+00:00", "level": "INFO", "message": "request", "taskName": null, "method": "GET", "path": "/logs", "status": 200, "duration_ms": 0.13}
+{"timestamp": "2026-04-04T23:52:10.893375+00:00", "level": "INFO", "message": "App started"}
