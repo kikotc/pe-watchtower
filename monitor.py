@@ -125,8 +125,7 @@ def check_service_down() -> None:
             "color": 0xE74C3C,  # red
             "fields": [
                 {"name": "Endpoint", "value": f"`{health_url}`", "inline": True},
-                {"name": "Reason", "value": "Connection refused", "inline": True},
-                {"name": "Full Error", "value": f"||`{status}`||", "inline": False},
+                {"name": "Reason", "value": f"`{status}`", "inline": True},
                 {"name": "Next check in", "value": f"`{CHECK_INTERVAL}s`", "inline": True},
             ],
             "footer": {"text": "Watchtower Alerting"},
