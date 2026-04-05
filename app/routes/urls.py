@@ -51,6 +51,7 @@ def list_or_create_urls():
         original_url = data.get("url") or data.get("original_url")
         user_id = data.get("user_id")
         title = data.get("title", "")
+        custom_short_code = data.get("short_code")
 
         if not original_url:
             return jsonify({"error": "url is required"}), 400
@@ -69,12 +70,17 @@ def list_or_create_urls():
             if not user:
                 return jsonify({"error": "User not found"}), 404
 
-        for _ in range(10):
-            short_code = _generate_short_code()
-            if not Url.get_or_none(Url.short_code == short_code):
-                break
+        if custom_short_code:
+            if Url.get_or_none(Url.short_code == custom_short_code):
+                return jsonify({"error": "Short code already in use"}), 409
+            short_code = custom_short_code
         else:
-            return jsonify({"error": "Failed to generate unique short code"}), 500
+            for _ in range(10):
+                short_code = _generate_short_code()
+                if not Url.get_or_none(Url.short_code == short_code):
+                    break
+            else:
+                return jsonify({"error": "Failed to generate unique short code"}), 500
 
         now = datetime.now(timezone.utc)
         try:
@@ -242,7 +248,7 @@ def delete_url(url_id):
     )
 
     url.delete_instance()
-    return jsonify({"message": "URL deleted"}), 200
+    return "", 204
 
 
 @urls_bp.route("/<short_code>", methods=["GET"])
