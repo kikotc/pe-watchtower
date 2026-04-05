@@ -22,6 +22,9 @@ def create_app():
 
     register_routes(app)
 
+    from app.alerting import start_monitor
+    start_monitor()
+
     @app.before_request
     def _start_timer():
         g.start_time = time.monotonic()

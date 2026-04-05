@@ -38,3 +38,9 @@ def metrics():
 @observability_bp.route("/logs")
 def logs():
     return jsonify(get_log_buffer())
+
+
+@observability_bp.route("/debug/crash")
+def debug_crash():
+    """Test endpoint: returns 500 to trigger high-error-rate alerting."""
+    return jsonify({"error": "simulated server error"}), 500
