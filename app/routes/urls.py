@@ -31,10 +31,70 @@ def _url_to_dict(url):
     }
 
 
-@urls_bp.route("/urls", methods=["GET"])
-def list_urls():
-    urls = Url.select()
-    return jsonify([_url_to_dict(u) for u in urls])
+@urls_bp.route("/urls", methods=["GET", "POST"])
+def list_or_create_urls():
+    if request.method == "POST":
+        data = request.get_json(silent=True)
+        if not data:
+            return jsonify({"error": "Request body must be JSON"}), 400
+
+        original_url = data.get("url") or data.get("original_url")
+        user_id = data.get("user_id")
+        title = data.get("title", "")
+
+        if not original_url:
+            return jsonify({"error": "url is required"}), 400
+
+        if user_id:
+            user = User.get_or_none(User.id == user_id)
+            if not user:
+                return jsonify({"error": "User not found"}), 404
+
+        for _ in range(10):
+            short_code = _generate_short_code()
+            if not Url.get_or_none(Url.short_code == short_code):
+                break
+        else:
+            return jsonify({"error": "Failed to generate unique short code"}), 500
+
+        now = datetime.now(timezone.utc)
+        try:
+            url = Url.create(
+                user=user_id,
+                short_code=short_code,
+                original_url=original_url,
+                title=title,
+                is_active=True,
+                created_at=now,
+                updated_at=now,
+            )
+        except IntegrityError as e:
+            if "short_code" in str(e):
+                return jsonify({"error": "Short code collision"}), 409
+            return jsonify({"error": "Database error creating URL"}), 500
+
+        Event.create(
+            url=url.id,
+            user=user_id,
+            event_type="created",
+            timestamp=now,
+            details=json.dumps({"short_code": short_code, "original_url": original_url}),
+        )
+
+        return jsonify(_url_to_dict(url)), 201
+
+    # GET
+    query = Url.select()
+
+    user_id = request.args.get("user_id", type=int)
+    if user_id is not None:
+        query = query.where(Url.user == user_id)
+
+    is_active = request.args.get("is_active")
+    if is_active is not None:
+        query = query.where(Url.is_active == (is_active.lower() in ("true", "1")))
+
+    return jsonify([_url_to_dict(u) for u in query])
 
 
 @urls_bp.route("/urls/<int:url_id>", methods=["GET"])

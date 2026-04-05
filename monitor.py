@@ -626,7 +626,7 @@ def chaos_status_proxy():
 @ui.route("/chaos/<action>", methods=["POST"])
 @_login_required
 def chaos_action_proxy(action):
-    allowed = {"latency", "error-rate", "db-kill", "cpu-stress", "crash", "clear"}
+    allowed = {"latency", "error-rate", "db-kill", "cpu-stress", "crash", "clear", "traffic"}
     if action not in allowed:
         return jsonify({"error": "unknown action"}), 400
     try:
