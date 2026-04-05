@@ -84,6 +84,41 @@ def get_event(event_id):
     return jsonify(_event_to_dict(event))
 
 
+@events_bp.route("/<int:event_id>", methods=["PUT"])
+def update_event(event_id):
+    event = Event.get_or_none(Event.id == event_id)
+    if not event:
+        return jsonify({"error": "Event not found"}), 404
+
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Request body must be JSON"}), 400
+
+    if "event_type" in data:
+        event.event_type = data["event_type"]
+    if "details" in data:
+        details = data["details"]
+        if isinstance(details, dict):
+            details = json.dumps(details)
+        event.details = details
+    if "url_id" in data:
+        event.url = data["url_id"]
+    if "user_id" in data:
+        event.user = data["user_id"]
+
+    event.save()
+    return jsonify(_event_to_dict(event))
+
+
+@events_bp.route("/<int:event_id>", methods=["DELETE"])
+def delete_event(event_id):
+    event = Event.get_or_none(Event.id == event_id)
+    if not event:
+        return jsonify({"error": "Event not found"}), 404
+    event.delete_instance()
+    return jsonify({"message": "Event deleted"}), 200
+
+
 @events_bp.route("/bulk", methods=["POST"])
 def bulk_load_events():
     data = request.get_json(silent=True)

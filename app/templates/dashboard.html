@@ -395,7 +395,7 @@
     .chart-axis    { display: flex; justify-content: space-between; padding: 4px 18px 12px; font-size: 11px; color: var(--muted); }
 
     /* ── SLO WIDGET ── */
-    .slo-card { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0; }
+    .slo-card { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0; flex: 1; }
     .slo-main { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 22px 20px; border-right: 1px solid var(--border); gap: 6px; }
     .slo-pct  { font-size: 42px; font-weight: 700; line-height: 1; transition: color 0.4s; }
     .slo-lbl  { font-size: 12px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); }
@@ -998,7 +998,7 @@
     <div class="grid-2-l">
 
       <!-- SLO UPTIME WIDGET -->
-      <div class="card" style="padding:0;overflow:hidden;">
+      <div class="card" style="padding:0;overflow:hidden;display:flex;flex-direction:column;">
         <div class="panel-header">
           <span class="section-title">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M12 2L3 7v5c0 5.25 3.8 10.15 9 11.35C17.2 22.15 21 17.25 21 12V7L12 2z"/></svg>

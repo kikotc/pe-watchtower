@@ -24,6 +24,9 @@ def _generate_short_code(length=6):
 
 
 def _url_to_dict(url):
+    clicks = Event.select().where(
+        (Event.url == url.id) & (Event.event_type == "click")
+    ).count()
     return {
         "id": url.id,
         "user_id": url.user_id,
@@ -31,6 +34,7 @@ def _url_to_dict(url):
         "original_url": url.original_url,
         "title": url.title,
         "is_active": url.is_active,
+        "clicks": clicks,
         "created_at": url.created_at.isoformat() if url.created_at else None,
         "updated_at": url.updated_at.isoformat() if url.updated_at else None,
     }
