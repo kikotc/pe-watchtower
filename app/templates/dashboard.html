@@ -491,37 +491,227 @@
     .time-btn.active { color: var(--blue); border-color: var(--blue); background: rgba(59,130,246,0.1); }
 
     /* ── CHAOS ENGINEERING ── */
+    .chaos-hero {
+      position: relative; overflow: hidden;
+      background:
+        radial-gradient(circle at top right, rgba(239,68,68,0.16), transparent 28%),
+        radial-gradient(circle at 18% 18%, rgba(59,130,246,0.12), transparent 26%),
+        linear-gradient(180deg, rgba(19,29,53,0.98), rgba(15,22,41,0.98));
+      border: 1px solid rgba(59,130,246,0.15);
+      border-radius: 16px;
+      padding: 26px 28px;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.26);
+    }
+    .chaos-hero::before {
+      content: "";
+      position: absolute; inset: 0 0 auto 0; height: 3px;
+      background: linear-gradient(90deg, rgba(245,158,11,0.95), rgba(239,68,68,0.75), rgba(59,130,246,0.6));
+    }
+    .chaos-hero-top {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 18px;
+    }
+    .chaos-hero-copy { max-width: 760px; }
+    .chaos-kicker {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
+      color: #fbbf24; margin-bottom: 12px;
+    }
+    .chaos-kicker-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #f59e0b; box-shadow: 0 0 10px rgba(245,158,11,0.75);
+    }
+    .chaos-hero-title {
+      font-size: 30px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.05;
+      color: #f8fafc;
+      margin-bottom: 10px;
+    }
+    .chaos-hero-sub {
+      font-size: 14px; color: var(--faint); line-height: 1.65;
+      max-width: 680px;
+    }
+    .chaos-hero-badge {
+      display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0;
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(245,158,11,0.24);
+      background: rgba(245,158,11,0.08);
+      color: #fcd34d;
+      font-size: 12px; font-weight: 700;
+      white-space: nowrap;
+    }
+    .chaos-hero-metrics {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 14px; margin-top: 20px;
+    }
+    .chaos-mini {
+      background: rgba(8,13,24,0.44);
+      border: 1px solid rgba(36,51,80,0.9);
+      border-radius: 12px;
+      padding: 14px 15px;
+      min-height: 88px;
+    }
+    .chaos-mini-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 10px;
+    }
+    .chaos-mini-val {
+      font-size: 16px; font-weight: 700; color: #f8fafc; line-height: 1.2;
+      margin-bottom: 5px;
+    }
+    .chaos-mini-sub {
+      font-size: 12px; color: var(--faint); line-height: 1.45;
+    }
+
+    .chaos-status-wrap {
+      display: grid; grid-template-columns: 1.35fr 1fr;
+      gap: 18px;
+    }
+    .chaos-status-bar {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 18px; border-radius: 14px;
+      border: 1px solid rgba(36,51,80,0.95);
+      background: linear-gradient(180deg, rgba(19,29,53,0.98), rgba(15,22,41,0.98));
+      font-size: 14px; font-weight: 500;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+    }
+    .chaos-status-main {
+      display: flex; align-items: center; gap: 14px; min-width: 0;
+    }
+    .chaos-status-copy {
+      display: flex; flex-direction: column; gap: 3px; min-width: 0;
+    }
+    .chaos-status-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--muted);
+    }
+    .chaos-status-text {
+      font-size: 15px; font-weight: 700; color: #f1f5f9;
+    }
+    .chaos-status-sub {
+      font-size: 12px; color: var(--muted);
+    }
+    .chaos-status-bar.chaos-hot {
+      border-color: rgba(239,68,68,0.36);
+      background: linear-gradient(180deg, rgba(54,21,27,0.92), rgba(32,15,20,0.92));
+      box-shadow: 0 0 24px rgba(239,68,68,0.1);
+    }
+    .chaos-status-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+    .chaos-status-dot.idle    { background: var(--green); animation: pulse 2s infinite; }
+    .chaos-status-dot.running { background: var(--red); animation: ring-danger 1.4s infinite; }
+    .chaos-active-pill {
+      margin-left: auto;
+      max-width: 42%;
+      display: inline-flex; align-items: center; justify-content: flex-end;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      font-size: 12px; color: var(--faint);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .chaos-traffic {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 18px 20px;
+      border-radius: 14px;
+      border: 1px solid rgba(36,51,80,0.95);
+      background:
+        radial-gradient(circle at 85% 15%, rgba(59,130,246,0.14), transparent 32%),
+        linear-gradient(180deg, rgba(19,29,53,0.98), rgba(15,22,41,0.98));
+    }
+    .chaos-traffic-main {
+      display: flex; align-items: center; gap: 14px; min-width: 0;
+    }
+    .chaos-traffic-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      background: rgba(59,130,246,0.12);
+      border: 1px solid rgba(59,130,246,0.2);
+      box-shadow: 0 0 18px rgba(59,130,246,0.15);
+    }
+    .chaos-traffic-title {
+      font-size: 15px; font-weight: 700; color: #f8fafc; margin-bottom: 4px;
+    }
+    .chaos-traffic-desc {
+      font-size: 12px; color: var(--muted); line-height: 1.55; max-width: 440px;
+    }
+
     .chaos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
     .chaos-card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-      padding: 28px 24px; display: flex; flex-direction: column; align-items: center;
-      gap: 16px; text-align: center; position: relative; overflow: hidden;
+      position: relative; overflow: hidden;
+      background:
+        radial-gradient(circle at top right, rgba(255,255,255,0.035), transparent 28%),
+        linear-gradient(180deg, rgba(19,29,53,0.98), rgba(15,22,41,0.98));
+      border: 1px solid rgba(36,51,80,0.95); border-radius: 16px;
+      padding: 22px 20px 20px;
+      display: flex; flex-direction: column; align-items: stretch;
+      gap: 16px; text-align: left;
       transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;
+      min-height: 250px;
     }
-    .chaos-card:hover { transform: translateY(-2px); }
+    .chaos-card::before {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, rgba(148,163,184,0.7), transparent);
+    }
+    .chaos-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(59,130,246,0.26);
+      box-shadow: 0 18px 34px rgba(0,0,0,0.22);
+    }
     .chaos-card.chaos-active {
-      border-color: rgba(239,68,68,0.5);
-      box-shadow: 0 0 24px rgba(239,68,68,0.15);
+      border-color: rgba(239,68,68,0.52);
+      box-shadow: 0 0 0 1px rgba(239,68,68,0.12), 0 0 28px rgba(239,68,68,0.16);
     }
     .chaos-card.chaos-active::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: linear-gradient(90deg, var(--red), #f97316);
+      background: linear-gradient(90deg, var(--red), #f97316, rgba(249,115,22,0.15));
+    }
+    .chaos-card-head {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    }
+    .chaos-card-main {
+      display: flex; align-items: center; gap: 14px; min-width: 0;
     }
     .chaos-icon {
-      width: 56px; height: 56px; border-radius: 14px;
+      width: 56px; height: 56px; border-radius: 16px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 26px;
+      flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,0.06);
     }
-    .chaos-icon.ci-latency  { background: rgba(245,158,11,0.12); }
-    .chaos-icon.ci-error    { background: rgba(239,68,68,0.12); }
-    .chaos-icon.ci-db       { background: rgba(139,92,246,0.12); }
-    .chaos-icon.ci-cpu      { background: rgba(59,130,246,0.12); }
-    .chaos-icon.ci-crash    { background: rgba(239,68,68,0.15); }
-    .chaos-icon.ci-clear    { background: rgba(16,185,129,0.12); }
-    .chaos-title { font-size: 14px; font-weight: 700; color: #f1f5f9; }
-    .chaos-desc  { font-size: 12px; color: var(--muted); line-height: 1.4; }
+    .chaos-icon svg { width: 26px; height: 26px; }
+    .chaos-icon.ci-latency  { background: rgba(245,158,11,0.12); box-shadow: 0 0 18px rgba(245,158,11,0.12); }
+    .chaos-icon.ci-error    { background: rgba(239,68,68,0.12); box-shadow: 0 0 18px rgba(239,68,68,0.12); }
+    .chaos-icon.ci-db       { background: rgba(139,92,246,0.12); box-shadow: 0 0 18px rgba(139,92,246,0.12); }
+    .chaos-icon.ci-cpu      { background: rgba(59,130,246,0.12); box-shadow: 0 0 18px rgba(59,130,246,0.12); }
+    .chaos-icon.ci-crash    { background: rgba(239,68,68,0.15); box-shadow: 0 0 18px rgba(239,68,68,0.14); }
+    .chaos-icon.ci-clear    { background: rgba(16,185,129,0.12); box-shadow: 0 0 18px rgba(16,185,129,0.12); }
+    .chaos-title-wrap { min-width: 0; }
+    .chaos-title { font-size: 15px; font-weight: 700; color: #f8fafc; margin-bottom: 4px; }
+    .chaos-subtitle { font-size: 12px; color: var(--muted); }
+    .chaos-tag {
+      flex-shrink: 0;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.9px; text-transform: uppercase;
+      padding: 4px 8px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.07);
+      background: rgba(255,255,255,0.03);
+      color: var(--faint);
+    }
+    .chaos-tag.warn  { color: #fbbf24; border-color: rgba(245,158,11,0.2); background: rgba(245,158,11,0.08); }
+    .chaos-tag.danger{ color: #fca5a5; border-color: rgba(239,68,68,0.2); background: rgba(239,68,68,0.08); }
+    .chaos-tag.safe  { color: #6ee7b7; border-color: rgba(16,185,129,0.2); background: rgba(16,185,129,0.08); }
+    .chaos-desc  { font-size: 12px; color: var(--muted); line-height: 1.55; }
+    .chaos-meta {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-top: auto;
+    }
+    .chaos-meta-pill {
+      font-size: 11px; font-weight: 600; color: var(--faint);
+      padding: 5px 9px; border-radius: 999px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
     .chaos-btn {
-      padding: 9px 24px; border-radius: 8px; border: 1px solid transparent;
+      width: 100%;
+      padding: 10px 16px; border-radius: 10px; border: 1px solid transparent;
       font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
       transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.1s;
     }
@@ -538,20 +728,6 @@
       background: rgba(16,185,129,0.15); color: var(--green); border-color: rgba(16,185,129,0.3);
     }
     .chaos-btn-safe:hover { background: rgba(16,185,129,0.25); box-shadow: 0 0 12px rgba(16,185,129,0.2); }
-    .chaos-status-bar {
-      display: flex; align-items: center; gap: 12px;
-      padding: 14px 20px; border-radius: 10px;
-      border: 1px solid var(--border); background: var(--surface);
-      font-size: 14px; font-weight: 500;
-    }
-    .chaos-status-bar.chaos-hot {
-      border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.06);
-      box-shadow: 0 0 20px rgba(239,68,68,0.1);
-    }
-    .chaos-status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-    .chaos-status-dot.idle    { background: var(--green); animation: pulse 2s infinite; }
-    .chaos-status-dot.running { background: var(--red); animation: ring-danger 1.4s infinite; }
-
     /* ── REMEDIATION LOG ── */
     .remed-row {
       display: grid; grid-template-columns: 80px 140px 1fr 50px;
@@ -570,6 +746,22 @@
     .remed-restored { color: var(--green); background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); }
     .remed-failed   { color: var(--red); background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); }
     .remed-status   { text-align: center; font-weight: 600; font-size: 11px; }
+
+    @media (max-width: 1180px) {
+      .chaos-grid { grid-template-columns: repeat(2, 1fr); }
+      .chaos-status-wrap { grid-template-columns: 1fr; }
+      .chaos-hero-metrics { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 760px) {
+      .chaos-grid { grid-template-columns: 1fr; }
+      .chaos-hero-top, .chaos-traffic { flex-direction: column; align-items: flex-start; }
+      .chaos-hero-badge { white-space: normal; }
+      .chaos-hero-metrics { grid-template-columns: 1fr; }
+      .chaos-active-pill { max-width: 100%; margin-left: 0; }
+      .chaos-status-bar { flex-direction: column; align-items: stretch; }
+      .chaos-status-main { align-items: flex-start; }
+    }
   </style>
 </head>
 <body>
@@ -1090,70 +1282,225 @@
     <!-- TAB: CHAOS -->
     <div class="tab-panel" id="tab-chaos">
 
-      <!-- CHAOS STATUS BAR -->
-      <div class="chaos-status-bar" id="chaos-status-bar">
-        <span class="chaos-status-dot idle" id="chaos-status-dot"></span>
-        <span id="chaos-status-text">No experiments running — system nominal</span>
-        <span style="margin-left:auto;font-size:12px;color:var(--muted)" id="chaos-active-list"></span>
+      <div class="chaos-hero">
+        <div class="chaos-hero-top">
+          <div class="chaos-hero-copy">
+            <div class="chaos-kicker"><span class="chaos-kicker-dot"></span>Controlled Failure Lab</div>
+            <div class="chaos-hero-title">Chaos Engineering</div>
+            <div class="chaos-hero-sub">Stress the system on purpose, watch detection fire in real time, and validate that self-healing, alerting, and the dashboard all react the way an incident-response system should.</div>
+          </div>
+          <div class="chaos-hero-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L3 7v5c0 5.25 3.8 10.15 9 11.35C17.2 22.15 21 17.25 21 12V7L12 2z"/></svg>
+            Use on local hackathon env only
+          </div>
+        </div>
+
+        <div class="chaos-hero-metrics">
+          <div class="chaos-mini">
+            <div class="chaos-mini-label">Primary Goal</div>
+            <div class="chaos-mini-val">Trigger realistic failures</div>
+            <div class="chaos-mini-sub">Latency, errors, DB loss, CPU pressure, and process death.</div>
+          </div>
+          <div class="chaos-mini">
+            <div class="chaos-mini-label">What To Watch</div>
+            <div class="chaos-mini-val">Health, logs, SLO, incidents</div>
+            <div class="chaos-mini-sub">Flip to Overview and Data while experiments run to see signal quality.</div>
+          </div>
+          <div class="chaos-mini">
+            <div class="chaos-mini-label">Alert Path</div>
+            <div class="chaos-mini-val">Discord + dashboard state</div>
+            <div class="chaos-mini-sub">High error rate, burn rate, and service-down monitors should fire.</div>
+          </div>
+          <div class="chaos-mini">
+            <div class="chaos-mini-label">Recovery Model</div>
+            <div class="chaos-mini-val">Self-healing validation</div>
+            <div class="chaos-mini-sub">Use the remediation log below to confirm the system repaired itself.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chaos-status-wrap">
+
+        <!-- CHAOS STATUS BAR -->
+        <div class="chaos-status-bar" id="chaos-status-bar">
+          <div class="chaos-status-main">
+            <span class="chaos-status-dot idle" id="chaos-status-dot"></span>
+            <div class="chaos-status-copy">
+              <span class="chaos-status-label">Experiment Status</span>
+              <span class="chaos-status-text" id="chaos-status-text">No experiments running — system nominal</span>
+              <span class="chaos-status-sub">Detection should light up here within seconds when a test is active.</span>
+            </div>
+          </div>
+          <span class="chaos-active-pill" id="chaos-active-list"></span>
+        </div>
+
+        <!-- TRAFFIC GENERATOR -->
+        <div class="chaos-traffic">
+          <div class="chaos-traffic-main">
+            <div class="chaos-traffic-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 15a3 3 0 0 1 3-3h10"/>
+                <path d="M7 19h6a3 3 0 0 0 0-6"/>
+                <path d="M14 5h3a3 3 0 1 1 0 6H7"/>
+                <path d="M15 9l2-2 2 2"/>
+              </svg>
+            </div>
+            <div>
+              <div class="chaos-traffic-title">Traffic Generator</div>
+              <div class="chaos-traffic-desc">Generate synthetic user-facing traffic so chaos effects show up in logs, charts, and alerts instead of staying invisible in the background.</div>
+            </div>
+          </div>
+          <button class="chaos-btn chaos-btn-warn" onclick="chaosAction('traffic',{duration_s:60,rps:5})">Generate 60s @ 5 req/s</button>
+        </div>
       </div>
 
       <!-- EXPERIMENT CARDS -->
       <div class="chaos-grid">
 
         <div class="chaos-card" id="chaos-card-latency">
-          <div class="chaos-icon ci-latency">🐌</div>
-          <div class="chaos-title">Inject Latency</div>
+          <div class="chaos-card-head">
+            <div class="chaos-card-main">
+              <div class="chaos-icon ci-latency">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="8"/>
+                  <polyline points="12 8 12 12 15 14"/>
+                </svg>
+              </div>
+              <div class="chaos-title-wrap">
+                <div class="chaos-title">Inject Latency</div>
+                <div class="chaos-subtitle">Slow-path reliability test</div>
+              </div>
+            </div>
+            <div class="chaos-tag warn">Warn</div>
+          </div>
           <div class="chaos-desc">Add 2s delay to every request. Tests timeout alerting and dashboard response time charts.</div>
+          <div class="chaos-meta">
+            <span class="chaos-meta-pill">Delay: 2000ms</span>
+            <span class="chaos-meta-pill">Signal: response time</span>
+          </div>
           <button class="chaos-btn chaos-btn-warn" id="chaos-btn-latency" onclick="chaosToggle('latency',{delay_ms:2000})">Activate</button>
         </div>
 
         <div class="chaos-card" id="chaos-card-error-rate">
-          <div class="chaos-icon ci-error">💥</div>
-          <div class="chaos-title">Error Storm</div>
+          <div class="chaos-card-head">
+            <div class="chaos-card-main">
+              <div class="chaos-icon ci-error">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M13 2L4 14h7l-1 8 10-14h-7l0-6z"/>
+                </svg>
+              </div>
+              <div class="chaos-title-wrap">
+                <div class="chaos-title">Error Storm</div>
+                <div class="chaos-subtitle">Application failure burst</div>
+              </div>
+            </div>
+            <div class="chaos-tag danger">Critical</div>
+          </div>
           <div class="chaos-desc">50% of requests return 500. Triggers error rate alerts, SLO burn rate, and error classification.</div>
+          <div class="chaos-meta">
+            <span class="chaos-meta-pill">Failure rate: 50%</span>
+            <span class="chaos-meta-pill">Signal: SLO / alerts</span>
+          </div>
           <button class="chaos-btn chaos-btn-danger" id="chaos-btn-error_rate" onclick="chaosToggle('error_rate',{rate:0.5})">Activate</button>
         </div>
 
         <div class="chaos-card" id="chaos-card-db-kill">
-          <div class="chaos-icon ci-db">🗄️</div>
-          <div class="chaos-title">Kill Database</div>
+          <div class="chaos-card-head">
+            <div class="chaos-card-main">
+              <div class="chaos-icon ci-db">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                  <ellipse cx="12" cy="6" rx="7" ry="3"/>
+                  <path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/>
+                  <path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>
+                </svg>
+              </div>
+              <div class="chaos-title-wrap">
+                <div class="chaos-title">Kill Database</div>
+                <div class="chaos-subtitle">Dependency outage simulation</div>
+              </div>
+            </div>
+            <div class="chaos-tag danger">Critical</div>
+          </div>
           <div class="chaos-desc">Close all DB connections. Health check degrades, queries fail. Tests database resilience monitoring.</div>
+          <div class="chaos-meta">
+            <span class="chaos-meta-pill">Target: Postgres</span>
+            <span class="chaos-meta-pill">Signal: health / 5xx</span>
+          </div>
           <button class="chaos-btn chaos-btn-danger" id="chaos-btn-db_kill" onclick="chaosToggle('db_kill',{})">Activate</button>
         </div>
 
         <div class="chaos-card" id="chaos-card-cpu-stress">
-          <div class="chaos-icon ci-cpu">🔥</div>
-          <div class="chaos-title">CPU Stress</div>
+          <div class="chaos-card-head">
+            <div class="chaos-card-main">
+              <div class="chaos-icon ci-cpu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="7" y="7" width="10" height="10" rx="2"/>
+                  <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/>
+                </svg>
+              </div>
+              <div class="chaos-title-wrap">
+                <div class="chaos-title">CPU Stress</div>
+                <div class="chaos-subtitle">Saturation spike</div>
+              </div>
+            </div>
+            <div class="chaos-tag warn">Warn</div>
+          </div>
           <div class="chaos-desc">Spike process CPU for 30s. Watch the CPU ring and historical chart react in real time.</div>
+          <div class="chaos-meta">
+            <span class="chaos-meta-pill">Duration: 30s</span>
+            <span class="chaos-meta-pill">Signal: saturation</span>
+          </div>
           <button class="chaos-btn chaos-btn-warn" id="chaos-btn-cpu_stress" onclick="chaosToggle('cpu_stress',{duration_s:30})">30s Burn</button>
         </div>
 
         <div class="chaos-card" id="chaos-card-crash">
-          <div class="chaos-icon ci-crash">☠️</div>
-          <div class="chaos-title">Kill Process</div>
+          <div class="chaos-card-head">
+            <div class="chaos-card-main">
+              <div class="chaos-icon ci-crash">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="8"/>
+                  <path d="M9.5 9.5h.01M14.5 9.5h.01"/>
+                  <path d="M8.5 15c1.2-1 2.3-1.5 3.5-1.5s2.3.5 3.5 1.5"/>
+                </svg>
+              </div>
+              <div class="chaos-title-wrap">
+                <div class="chaos-title">Kill Process</div>
+                <div class="chaos-subtitle">Hard-stop recovery test</div>
+              </div>
+            </div>
+            <div class="chaos-tag danger">Critical</div>
+          </div>
           <div class="chaos-desc">Terminate the Flask process. Self-healing will detect the crash and auto-restart the service.</div>
+          <div class="chaos-meta">
+            <span class="chaos-meta-pill">Target: Flask app</span>
+            <span class="chaos-meta-pill">Signal: service down</span>
+          </div>
           <button class="chaos-btn chaos-btn-danger" onclick="if(confirm('Kill the Flask process? Self-healing will attempt restart.'))chaosAction('crash',{})">Kill Flask</button>
         </div>
 
         <div class="chaos-card">
-          <div class="chaos-icon ci-clear">✅</div>
-          <div class="chaos-title">Clear All</div>
+          <div class="chaos-card-head">
+            <div class="chaos-card-main">
+              <div class="chaos-icon ci-clear">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+              <div class="chaos-title-wrap">
+                <div class="chaos-title">Clear All</div>
+                <div class="chaos-subtitle">Return to nominal state</div>
+              </div>
+            </div>
+            <div class="chaos-tag safe">Safe</div>
+          </div>
           <div class="chaos-desc">Immediately disable all active chaos experiments and restore normal operation.</div>
+          <div class="chaos-meta">
+            <span class="chaos-meta-pill">Stops active tests</span>
+            <span class="chaos-meta-pill">Recovery helper</span>
+          </div>
           <button class="chaos-btn chaos-btn-safe" onclick="chaosAction('clear',{})">Clear All</button>
         </div>
 
-      </div>
-
-      <!-- TRAFFIC GENERATOR -->
-      <div class="chaos-status-bar" style="justify-content:space-between">
-        <div style="display:flex;align-items:center;gap:12px">
-          <span style="font-size:20px">📡</span>
-          <div>
-            <div style="font-weight:600;font-size:14px;color:#f1f5f9">Traffic Generator</div>
-            <div style="font-size:12px;color:var(--muted)">Generate synthetic requests to user-facing routes so chaos effects appear in logs and trigger alerts</div>
-          </div>
-        </div>
-        <button class="chaos-btn chaos-btn-warn" onclick="chaosAction('traffic',{duration_s:60,rps:5})">Generate 60s @ 5 req/s</button>
       </div>
 
       <!-- REMEDIATION LOG -->
@@ -1772,6 +2119,7 @@
         dot.className  = "chaos-status-dot running";
         text.textContent = "Service unreachable — self-healing may be in progress";
         text.style.color = "var(--red)";
+        list.textContent = "Awaiting recovery";
         document.querySelectorAll(".chaos-card").forEach(c => c.classList.remove("chaos-active"));
         return;
       }
@@ -1784,13 +2132,13 @@
         dot.className  = "chaos-status-dot running";
         text.textContent = `${active.length} experiment${active.length > 1 ? "s" : ""} running`;
         text.style.color = "var(--red)";
-        list.textContent = active.join(", ");
+        list.textContent = active.map(k => k.replaceAll("_", " ")).join(" · ");
       } else {
         bar.className  = "chaos-status-bar";
         dot.className  = "chaos-status-dot idle";
         text.textContent = "No experiments running — system nominal";
         text.style.color = "var(--green)";
-        list.textContent = "";
+        list.textContent = "All clear";
       }
 
       // Update card highlights and toggle buttons

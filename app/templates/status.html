@@ -22,7 +22,11 @@
     }
 
     body {
-      background: var(--bg); color: var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(59,130,246,0.16), transparent 28%),
+        radial-gradient(circle at 12% 18%, rgba(16,185,129,0.09), transparent 24%),
+        linear-gradient(180deg, #07101d 0%, #080d18 42%, #09111f 100%);
+      color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       min-height: 100vh;
     }
@@ -30,60 +34,171 @@
     /* ── HEADER ── */
     header {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 32px; height: 62px;
-      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 0 34px; height: 74px;
+      background: rgba(15,22,41,0.84);
+      border-bottom: 1px solid rgba(59,130,246,0.14);
+      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 1px 0 rgba(59,130,246,0.08), 0 8px 28px rgba(0,0,0,0.28);
+      position: sticky; top: 0; z-index: 100;
     }
-    .header-left { display: flex; align-items: center; gap: 12px; }
-    .logo-icon   { font-size: 22px; }
-    .logo-title  { font-size: 17px; font-weight: 700; color: #f1f5f9; }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .logo-box {
+      width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+      background: linear-gradient(145deg, #2563eb 0%, #1e3a8a 100%);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 0 24px rgba(59,130,246,0.5), 0 4px 12px rgba(0,0,0,0.35);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .logo-box svg { width: 24px; height: 24px; }
+    .logo-text { display: flex; flex-direction: column; gap: 2px; }
+    .logo-title  {
+      font-size: 18px; font-weight: 700;
+      background: linear-gradient(135deg, #f1f5f9 20%, #94a3b8 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      line-height: 1;
+    }
+    .logo-sub { font-size: 10px; color: var(--muted); letter-spacing: 1.3px; text-transform: uppercase; }
     .logo-badge  {
-      font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
+      font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
       color: var(--blue); background: rgba(59,130,246,0.12);
-      border: 1px solid rgba(59,130,246,0.25); border-radius: 4px; padding: 3px 8px;
+      border: 1px solid rgba(59,130,246,0.25); border-radius: 5px; padding: 4px 9px;
     }
-    .header-meta { font-size: 13px; color: var(--muted); }
+    .header-meta {
+      font-size: 13px; color: var(--muted);
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px; border-radius: 999px;
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+    }
+    .header-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--green); box-shadow: 0 0 10px rgba(16,185,129,0.65);
+      animation: pulse 2s infinite;
+    }
 
     /* ── LAYOUT ── */
-    main { max-width: 800px; margin: 0 auto; padding: 40px 24px 64px; display: flex; flex-direction: column; gap: 32px; }
+    main {
+      max-width: 980px; margin: 0 auto; padding: 34px 24px 72px;
+      display: flex; flex-direction: column; gap: 28px;
+    }
+    .status-top {
+      display: grid; grid-template-columns: 1.45fr 0.85fr; gap: 18px;
+      align-items: stretch;
+    }
 
     /* ── HERO ── */
     .hero {
-      display: flex; align-items: center; gap: 16px;
-      padding: 26px 28px; border-radius: 14px;
-      border: 1px solid var(--border); background: var(--surface);
-      transition: background 0.4s, border-color 0.4s;
+      position: relative; overflow: hidden;
+      display: flex; align-items: center; gap: 18px;
+      padding: 28px 30px; border-radius: 18px;
+      border: 1px solid rgba(36,51,80,0.95);
+      background:
+        radial-gradient(circle at top right, rgba(59,130,246,0.1), transparent 30%),
+        linear-gradient(180deg, rgba(19,29,53,0.98), rgba(15,22,41,0.98));
+      transition: background 0.4s, border-color 0.4s, box-shadow 0.4s;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.24);
     }
-    .hero.up   { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.07); }
-    .hero.down { border-color: rgba(239,68,68,0.4);  background: rgba(239,68,68,0.07); }
-    .hero-icon { font-size: 32px; line-height: 1; }
-    .hero-text h1 { font-size: 20px; font-weight: 700; }
-    .hero-text p  { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .hero::before {
+      content: ""; position: absolute; inset: 0 0 auto 0; height: 3px;
+      background: linear-gradient(90deg, rgba(59,130,246,0.9), transparent);
+    }
+    .hero.up {
+      border-color: rgba(16,185,129,0.38);
+      box-shadow: 0 0 0 1px rgba(16,185,129,0.06), 0 20px 40px rgba(0,0,0,0.24), 0 0 40px rgba(16,185,129,0.08);
+    }
+    .hero.down {
+      border-color: rgba(239,68,68,0.38);
+      box-shadow: 0 0 0 1px rgba(239,68,68,0.06), 0 20px 40px rgba(0,0,0,0.24), 0 0 40px rgba(239,68,68,0.1);
+    }
+    .hero-icon {
+      width: 68px; height: 68px; border-radius: 18px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; line-height: 1;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .hero-icon svg { width: 30px; height: 30px; }
+    .hero-text h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.35px; }
+    .hero-text p  { font-size: 14px; color: var(--muted); margin-top: 6px; line-height: 1.55; max-width: 470px; }
     .hero.up   .hero-text h1 { color: var(--green); }
     .hero.down .hero-text h1 { color: var(--red); }
     .hero-slo { margin-left: auto; text-align: right; }
-    .hero-slo .pct   { font-size: 26px; font-weight: 700; }
+    .hero-slo .pct   { font-size: 34px; font-weight: 800; line-height: 1; color: #f8fafc; }
     .hero-slo .label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .summary-card {
+      background:
+        radial-gradient(circle at top right, rgba(16,185,129,0.08), transparent 34%),
+        linear-gradient(180deg, rgba(19,29,53,0.98), rgba(15,22,41,0.98));
+      border: 1px solid rgba(36,51,80,0.95);
+      border-radius: 18px;
+      padding: 22px 22px 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.22);
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .summary-head {
+      display: flex; align-items: center; gap: 10px;
+      padding-bottom: 12px; border-bottom: 1px solid rgba(36,51,80,0.9);
+    }
+    .summary-icon {
+      width: 38px; height: 38px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.18);
+    }
+    .summary-title { font-size: 15px; font-weight: 700; color: #f8fafc; }
+    .summary-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .summary-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .summary-item {
+      padding: 12px 13px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+    .summary-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 8px;
+    }
+    .summary-value { font-size: 18px; font-weight: 700; color: #f8fafc; }
+    .summary-note  { font-size: 12px; color: var(--faint); margin-top: 4px; line-height: 1.45; }
 
     /* ── SECTION LABEL ── */
     .section-label {
       font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
-      color: var(--muted); padding-bottom: 10px; border-bottom: 1px solid var(--border);
+      color: var(--muted); padding-bottom: 12px; border-bottom: 1px solid rgba(36,51,80,0.9);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-label-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--blue);
+      box-shadow: 0 0 8px rgba(59,130,246,0.65);
     }
 
     /* ── COMPONENT ROWS ── */
-    .components { display: flex; flex-direction: column; gap: 2px; }
+    .components { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 
     .component {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 10px; padding: 16px 20px;
+      background:
+        radial-gradient(circle at top right, rgba(255,255,255,0.03), transparent 28%),
+        linear-gradient(180deg, rgba(19,29,53,0.98), rgba(15,22,41,0.98));
+      border: 1px solid rgba(36,51,80,0.95);
+      border-radius: 16px; padding: 18px 18px 16px;
+      box-shadow: 0 18px 36px rgba(0,0,0,0.18);
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
     }
+    .component:hover { transform: translateY(-2px); border-color: rgba(59,130,246,0.24); box-shadow: 0 20px 40px rgba(0,0,0,0.22); }
 
     .component-header {
       display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 12px;
+      margin-bottom: 14px; gap: 10px;
     }
-    .component-name { font-size: 14px; font-weight: 600; }
-    .component-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .component-title-wrap { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .component-icon {
+      width: 42px; height: 42px; border-radius: 13px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .component-icon.api { background: rgba(59,130,246,0.12); box-shadow: 0 0 16px rgba(59,130,246,0.12); }
+    .component-icon.db  { background: rgba(139,92,246,0.12); box-shadow: 0 0 16px rgba(139,92,246,0.12); }
+    .component-icon.url { background: rgba(16,185,129,0.12); box-shadow: 0 0 16px rgba(16,185,129,0.12); }
+    .component-name { font-size: 15px; font-weight: 700; color: #f8fafc; }
+    .component-desc { font-size: 12px; color: var(--muted); margin-top: 3px; line-height: 1.45; }
 
     .badge {
       font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 20px;
@@ -95,14 +210,14 @@
 
     /* ── UPTIME BARS ── */
     .uptime-bars {
-      display: flex; align-items: flex-end; gap: 2px; height: 28px;
+      display: flex; align-items: flex-end; gap: 3px; height: 38px;
     }
     .bar {
-      flex: 1; border-radius: 2px; min-width: 0; height: 100%;
-      cursor: pointer; transition: opacity 0.15s;
+      flex: 1; border-radius: 4px; min-width: 0; height: 100%;
+      cursor: pointer; transition: opacity 0.15s, transform 0.15s;
       position: relative;
     }
-    .bar:hover { opacity: 0.75; }
+    .bar:hover { opacity: 0.82; transform: translateY(-1px); }
     .bar.green  { background: var(--green); }
     .bar.yellow { background: var(--yellow); }
     .bar.red    { background: var(--red); }
@@ -119,31 +234,36 @@
 
     .uptime-legend {
       display: flex; justify-content: space-between;
-      font-size: 11px; color: var(--muted); margin-top: 6px;
+      font-size: 11px; color: var(--muted); margin-top: 8px;
     }
 
     /* ── INCIDENT HISTORY ── */
     .incidents { display: flex; flex-direction: column; gap: 0; }
 
     .incident {
-      border: 1px solid var(--border); border-bottom: none;
-      background: var(--surface); padding: 18px 20px;
+      border: 1px solid rgba(36,51,80,0.95); border-bottom: none;
+      background:
+        radial-gradient(circle at top right, rgba(255,255,255,0.02), transparent 28%),
+        linear-gradient(180deg, rgba(19,29,53,0.98), rgba(15,22,41,0.98));
+      padding: 18px 20px;
       display: flex; gap: 16px; align-items: flex-start;
+      transition: background 0.18s;
     }
+    .incident:hover { background: linear-gradient(180deg, rgba(20,31,56,0.98), rgba(15,22,41,0.98)); }
     .incident:first-child { border-radius: 10px 10px 0 0; }
-    .incident:last-child  { border-bottom: 1px solid var(--border); border-radius: 0 0 10px 10px; }
-    .incident:only-child  { border-radius: 10px; border-bottom: 1px solid var(--border); }
+    .incident:last-child  { border-bottom: 1px solid rgba(36,51,80,0.95); border-radius: 0 0 10px 10px; }
+    .incident:only-child  { border-radius: 10px; border-bottom: 1px solid rgba(36,51,80,0.95); }
 
     .inc-dot {
-      width: 10px; height: 10px; border-radius: 50%;
-      margin-top: 4px; flex-shrink: 0;
+      width: 12px; height: 12px; border-radius: 50%;
+      margin-top: 5px; flex-shrink: 0;
     }
-    .inc-dot.resolved { background: var(--green); }
-    .inc-dot.ongoing  { background: var(--red); }
-    .inc-dot.error    { background: var(--yellow); }
+    .inc-dot.resolved { background: var(--green); box-shadow: 0 0 10px rgba(16,185,129,0.5); }
+    .inc-dot.ongoing  { background: var(--red); box-shadow: 0 0 10px rgba(239,68,68,0.5); }
+    .inc-dot.error    { background: var(--yellow); box-shadow: 0 0 10px rgba(245,158,11,0.45); }
 
     .inc-body { flex: 1; }
-    .inc-title { font-size: 14px; font-weight: 600; }
+    .inc-title { font-size: 15px; font-weight: 700; color: #f8fafc; }
     .inc-meta  { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.6; }
 
     .inc-timeline {
@@ -167,54 +287,124 @@
 
     .no-incidents {
       text-align: center; padding: 36px;
-      background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+      background: linear-gradient(180deg, rgba(19,29,53,0.98), rgba(15,22,41,0.98)); border: 1px solid rgba(36,51,80,0.95); border-radius: 14px;
       color: var(--muted); font-size: 14px;
+      box-shadow: 0 18px 36px rgba(0,0,0,0.18);
     }
 
     /* ── FOOTER ── */
     footer {
       text-align: center; font-size: 12px; color: var(--muted);
-      padding: 20px; border-top: 1px solid var(--border);
+      padding: 22px; border-top: 1px solid rgba(36,51,80,0.95);
+      background: rgba(7,13,25,0.35);
     }
     footer a { color: var(--blue); text-decoration: none; }
     footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 900px) {
+      header { padding: 0 22px; }
+      main { padding: 26px 18px 60px; }
+      .status-top { grid-template-columns: 1fr; }
+      .components { grid-template-columns: 1fr; }
+      .hero { padding: 24px 22px; }
+    }
+
+    @media (max-width: 640px) {
+      .hero { flex-wrap: wrap; }
+      .hero-slo { margin-left: 0; text-align: left; width: 100%; padding-top: 8px; }
+      .hero-text h1 { font-size: 24px; }
+      .header-meta { font-size: 12px; padding: 7px 10px; }
+      .logo-badge { display: none; }
+    }
   </style>
 </head>
 <body>
 
 <header>
   <div class="header-left">
-    <span class="logo-icon">🗼</span>
-    <span class="logo-title">Watchtower</span>
+    <div class="logo-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="22" x2="12" y2="13" stroke="rgba(255,255,255,0.3)" stroke-width="1.4"/>
+        <line x1="10" y1="22" x2="14" y2="22" stroke="rgba(255,255,255,0.3)" stroke-width="1.4"/>
+        <line x1="10.5" y1="18" x2="13.5" y2="18" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+        <path d="M10,13 L12,10.5 L14,13Z" fill="rgba(255,255,255,0.25)" stroke="rgba(255,255,255,0.35)" stroke-width="1"/>
+        <line x1="12" y1="10" x2="5" y2="6" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+        <line x1="12" y1="10" x2="19" y2="6" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+        <path d="M6,9 A8,8 0 0,1 18,9" stroke="rgba(255,255,255,0.5)" stroke-width="1.3"/>
+        <path d="M2,12 C6,7 18,7 22,12 C18,17 6,17 2,12Z" stroke="white" stroke-width="1.6"/>
+        <circle cx="12" cy="12" r="3.8" stroke="white" stroke-width="1.5"/>
+        <circle cx="12" cy="12" r="1.7" fill="white" stroke="none"/>
+      </svg>
+    </div>
+    <div class="logo-text">
+      <span class="logo-title">Watchtower</span>
+      <span class="logo-sub">Public Status</span>
+    </div>
     <span class="logo-badge">Status</span>
   </div>
-  <div class="header-meta">Last updated: <span id="last-checked">—</span></div>
+  <div class="header-meta"><span class="header-dot"></span>Last updated: <span id="last-checked">—</span></div>
 </header>
 
 <main>
 
-  <!-- HERO -->
-  <div class="hero" id="hero">
-    <div class="hero-icon" id="hero-icon">…</div>
-    <div class="hero-text">
-      <h1 id="hero-title">Checking status…</h1>
-      <p id="hero-sub">Fetching current data</p>
+  <div class="status-top">
+    <!-- HERO -->
+    <div class="hero" id="hero">
+      <div class="hero-icon" id="hero-icon">…</div>
+      <div class="hero-text">
+        <h1 id="hero-title">Checking status…</h1>
+        <p id="hero-sub">Fetching current data</p>
+      </div>
+      <div class="hero-slo">
+        <div class="pct" id="uptime-pct">—</div>
+        <div class="label">Uptime today</div>
+      </div>
     </div>
-    <div class="hero-slo">
-      <div class="pct" id="uptime-pct">—</div>
-      <div class="label">Uptime today</div>
+
+    <div class="summary-card">
+      <div class="summary-head">
+        <div class="summary-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div>
+          <div class="summary-title">System Snapshot</div>
+          <div class="summary-sub">Fast overview of reliability signals</div>
+        </div>
+      </div>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <div class="summary-label">Current State</div>
+          <div class="summary-value" id="summary-state">Checking…</div>
+          <div class="summary-note">Live status from the resilient monitor service.</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">Recorded Incidents</div>
+          <div class="summary-value" id="summary-incidents">—</div>
+          <div class="summary-note">Most recent incident records shown below.</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">Refresh Cadence</div>
+          <div class="summary-value">30s</div>
+          <div class="summary-note">This page refreshes automatically without manual reload.</div>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- COMPONENTS -->
-  <div class="section-label">Components</div>
+  <div class="section-label"><span class="section-label-dot"></span>Components</div>
   <div class="components" id="components">
 
     <div class="component" id="comp-api">
       <div class="component-header">
-        <div>
+        <div class="component-title-wrap">
+          <div class="component-icon api">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <div>
           <div class="component-name">API Server</div>
           <div class="component-desc">Health endpoint · REST API</div>
+          </div>
         </div>
         <span class="badge" id="badge-api">—</span>
       </div>
@@ -228,9 +418,14 @@
 
     <div class="component" id="comp-db">
       <div class="component-header">
-        <div>
+        <div class="component-title-wrap">
+          <div class="component-icon db">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg>
+          </div>
+          <div>
           <div class="component-name">Database</div>
           <div class="component-desc">PostgreSQL · URL &amp; user storage</div>
+          </div>
         </div>
         <span class="badge" id="badge-db">—</span>
       </div>
@@ -244,9 +439,14 @@
 
     <div class="component" id="comp-shortener">
       <div class="component-header">
-        <div>
+        <div class="component-title-wrap">
+          <div class="component-icon url">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </div>
+          <div>
           <div class="component-name">URL Shortener</div>
           <div class="component-desc">Shorten · redirect · manage URLs</div>
+          </div>
         </div>
         <span class="badge" id="badge-shortener">—</span>
       </div>
@@ -261,7 +461,7 @@
   </div>
 
   <!-- INCIDENT HISTORY -->
-  <div class="section-label">Incident History</div>
+  <div class="section-label"><span class="section-label-dot"></span>Incident History</div>
   <div id="incidents-list">
     <div class="no-incidents">Loading…</div>
   </div>
@@ -355,7 +555,16 @@
     const dbOk = health?.database === "ok";
     const hero = document.getElementById("hero");
     hero.className = "hero " + (isUp ? "up" : "down");
-    document.getElementById("hero-icon").textContent  = isUp ? "🟢" : "🔴";
+    document.getElementById("hero-icon").innerHTML = isUp
+      ? `<svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+           <circle cx="12" cy="12" r="9"></circle>
+           <polyline points="8 12.5 10.8 15.3 16.5 9.5"></polyline>
+         </svg>`
+      : `<svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+           <circle cx="12" cy="12" r="9"></circle>
+           <line x1="12" y1="7.5" x2="12" y2="12.5"></line>
+           <line x1="12" y1="16.2" x2="12.01" y2="16.2"></line>
+         </svg>`;
     document.getElementById("hero-title").textContent = isUp
       ? "All Systems Operational" : "Service Disrupted";
     document.getElementById("hero-sub").textContent = isUp
@@ -366,6 +575,10 @@
       ? slo.uptime_percent.toFixed(2) + "%"
       : "100%";
     document.getElementById("uptime-pct").textContent = pct;
+    document.getElementById("summary-state").textContent = isUp
+      ? (dbOk ? "Operational" : "Degraded")
+      : "Incident Active";
+    document.getElementById("summary-incidents").textContent = incidents ? String(incidents.length) : "—";
 
     // Badges
     setBadge("badge-api",       isUp ? "ok" : "down");
