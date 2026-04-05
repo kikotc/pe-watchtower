@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Watchtower — Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #080d18;
+      --surface:   #0f1629;
+      --surface2:  #131d35;
+      --border:    #1e2d4a;
+      --border2:   #243350;
+      --blue:      #3b82f6;
+      --green:     #10b981;
+      --yellow:    #f59e0b;
+      --red:       #ef4444;
+      --text:      #e2e8f0;
+      --muted:     #64748b;
+      --faint:     #94a3b8;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 16px;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      height: 62px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .logo-icon   { font-size: 22px; line-height: 1; }
+    .logo-title  { font-size: 17px; font-weight: 700; letter-spacing: -0.2px; color: #f1f5f9; }
+    .logo-badge  {
+      font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
+      color: var(--blue); background: rgba(59,130,246,0.12);
+      border: 1px solid rgba(59,130,246,0.25); border-radius: 4px; padding: 3px 8px;
+    }
+    .header-right { display: flex; align-items: center; gap: 20px; }
+    #last-updated { font-size: 13px; color: var(--muted); }
+    .btn-logout {
+      font-size: 13px; font-weight: 500; color: var(--muted); text-decoration: none;
+      border: 1px solid var(--border2); border-radius: 6px; padding: 6px 14px;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .btn-logout:hover { color: var(--text); border-color: var(--faint); }
+
+    /* ── LAYOUT ── */
+    main {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 26px 32px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .grid-4   { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+    .grid-3   { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .grid-2   { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+    .grid-2-l { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+
+    /* ── STATUS BANNER ── */
+    #status-banner {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 20px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--surface);
+      font-size: 15px; font-weight: 500;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    #status-banner.healthy  { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.06); }
+    #status-banner.degraded { border-color: rgba(239,68,68,0.4);  background: rgba(239,68,68,0.06); }
+
+    .pulse-dot {
+      width: 11px; height: 11px; border-radius: 50%;
+      background: var(--green); flex-shrink: 0; animation: pulse 2s infinite;
+    }
+    .pulse-dot.red { background: var(--red); animation: none; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.45; transform: scale(0.82); }
+    }
+    #status-text       { color: var(--green); }
+    #status-text.red   { color: var(--red); }
+    .status-uptime     { color: var(--muted); margin-left: auto; font-size: 13px; font-weight: 400; }
+
+    /* ── BASE CARD ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px 24px;
+    }
+
+    /* ── METRIC RING CARD ── */
+    .metric-card { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 26px 20px 20px; }
+    .ring-wrap   { position: relative; width: 120px; height: 120px; flex-shrink: 0; }
+    .ring-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .ring-bg     { fill: none; stroke: var(--border2); stroke-width: 9; }
+    /* circumference for r=48: 2π×48 ≈ 301.6 */
+    .ring-fill   {
+      fill: none; stroke-width: 9; stroke-linecap: round;
+      stroke-dasharray: 301.6; stroke-dashoffset: 301.6;
+      transition: stroke-dashoffset 0.7s ease, stroke 0.4s ease;
+    }
+    .ring-center {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .ring-val  { font-size: 22px; font-weight: 700; color: #f1f5f9; line-height: 1; }
+    .ring-unit { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .metric-label { font-size: 13px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); text-align: center; }
+    .metric-sub   { font-size: 12px; color: var(--muted); text-align: center; margin-top: -8px; }
+
+    /* ── STAT CARD (icon) ── */
+    .stat-card { display: flex; align-items: center; gap: 18px; }
+    .stat-icon { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .icon-blue   { background: rgba(59,130,246,0.15); }
+    .icon-green  { background: rgba(16,185,129,0.15); }
+    .icon-purple { background: rgba(139,92,246,0.15); }
+    .stat-info .stat-num { font-size: 28px; font-weight: 700; color: #f1f5f9; }
+    .stat-info .stat-lbl { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+    /* ── COLORED STAT CARD (error rate, avg response) ── */
+    .colored-stat { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; gap: 10px; }
+    .colored-num  { font-size: 38px; font-weight: 700; line-height: 1; transition: color 0.4s; }
+    .colored-unit { font-size: 15px; font-weight: 400; color: var(--muted); margin-left: 3px; }
+    .colored-lbl  { font-size: 13px; color: var(--muted); font-weight: 500; }
+    .c-green  { color: var(--green); }
+    .c-yellow { color: var(--yellow); }
+    .c-red    { color: var(--red); }
+
+    /* ── PANEL HEADER ── */
+    .panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+    }
+    .section-title { font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+    .section-badge {
+      font-size: 12px; color: var(--blue);
+      background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 4px; padding: 3px 9px;
+    }
+
+    /* ── SPARKLINE ── */
+    .sparkline-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    #sparkline-svg  { width: 100%; height: 80px; display: block; }
+    .sparkline-body { padding: 4px 20px 14px; }
+    .sparkline-axis {
+      display: flex; justify-content: space-between;
+      margin-top: 6px; font-size: 11px; color: var(--muted);
+      padding: 0 4px;
+    }
+
+    /* ── TOP ENDPOINTS ── */
+    .panel-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .endpoint-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 20px; border-bottom: 1px solid rgba(30,45,74,0.4);
+      transition: background 0.15s;
+    }
+    .endpoint-row:last-child { border-bottom: none; }
+    .endpoint-row:hover { background: var(--surface2); }
+    .endpoint-rank  { font-size: 11px; color: var(--muted); width: 16px; text-align: center; flex-shrink: 0; }
+    .endpoint-path  { font-family: "SF Mono","Fira Code",monospace; font-size: 13px; color: #c4d4f0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .endpoint-bar-wrap { width: 70px; height: 4px; background: var(--border2); border-radius: 99px; overflow: hidden; flex-shrink: 0; }
+    .endpoint-bar   { height: 100%; background: var(--blue); border-radius: 99px; transition: width 0.5s ease; }
+    .endpoint-count { font-size: 12px; color: var(--muted); width: 28px; text-align: right; font-family: "SF Mono",monospace; flex-shrink: 0; }
+
+    /* ── ACTIVE URLS ── */
+    .url-row {
+      display: grid; grid-template-columns: 90px 1fr 60px;
+      gap: 12px; align-items: center;
+      padding: 10px 20px; border-bottom: 1px solid rgba(30,45,74,0.4);
+      transition: background 0.15s;
+    }
+    .url-row:last-child  { border-bottom: none; }
+    .url-row:hover       { background: var(--surface2); }
+    .url-code    { font-family: "SF Mono","Fira Code",monospace; font-size: 14px; font-weight: 700; color: var(--blue); }
+    .url-original{ font-size: 12px; color: var(--faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .url-active  { font-size: 11px; font-weight: 600; color: var(--green); text-align: right; }
+    .url-inactive{ font-size: 11px; color: var(--muted); text-align: right; }
+
+    /* ── LOG FEED ── */
+    #log-feed  { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    #log-list  { max-height: 300px; overflow-y: auto; padding: 6px 0; }
+    #log-list::-webkit-scrollbar       { width: 4px; }
+    #log-list::-webkit-scrollbar-track { background: transparent; }
+    #log-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+    .log-entry {
+      display: grid; grid-template-columns: 88px 68px 58px 52px 1fr 76px;
+      gap: 10px; align-items: center; padding: 7px 20px;
+      font-family: "SF Mono","Fira Code","Menlo",monospace; font-size: 13px;
+      border-bottom: 1px solid rgba(30,45,74,0.5); transition: background 0.15s;
+    }
+    .log-entry:last-child { border-bottom: none; }
+    .log-entry:hover { background: var(--surface2); }
+    .log-time   { color: var(--muted); }
+    .log-level  { font-weight: 600; border-radius: 3px; padding: 2px 6px; text-align: center; font-size: 11px; }
+    .level-INFO    { color: #7dd3fc; background: rgba(125,211,252,0.1); }
+    .level-WARNING { color: var(--yellow); background: rgba(245,158,11,0.1); }
+    .level-ERROR   { color: var(--red); background: rgba(239,68,68,0.1); }
+    .level-DEBUG   { color: var(--muted); background: rgba(100,116,139,0.1); }
+    .log-method { color: var(--faint); }
+    .status-2xx { color: var(--green); }
+    .status-4xx { color: var(--yellow); }
+    .status-5xx { color: var(--red); }
+    .log-path   { color: #c4d4f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .log-dur    { color: var(--muted); text-align: right; }
+
+    /* ── EVENTS TABLE ── */
+    #events-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    table  { width: 100%; border-collapse: collapse; }
+    th     { text-align: left; padding: 11px 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); }
+    td     { padding: 10px 20px; font-size: 13px; color: var(--faint); border-bottom: 1px solid rgba(30,45,74,0.4); font-family: "SF Mono","Fira Code",monospace; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td      { background: var(--surface2); }
+    .event-type    { display: inline-block; padding: 3px 9px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .event-created { color: var(--green);  background: rgba(16,185,129,0.1); }
+    .event-deleted { color: var(--red);    background: rgba(239,68,68,0.1); }
+    .event-updated { color: var(--yellow); background: rgba(245,158,11,0.1); }
+    .event-other   { color: var(--muted);  background: rgba(100,116,139,0.1); }
+
+    .empty-state { text-align: center; padding: 32px; color: var(--muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <div class="logo-icon">🛡</div>
+      <div class="logo-title">Watchtower</div>
+      <div class="logo-badge">Admin</div>
+    </div>
+    <div class="header-right">
+      <span id="last-updated">Loading…</span>
+      <a href="/dashboard/logout" class="btn-logout">Sign out</a>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- STATUS BANNER -->
+    <div id="status-banner">
+      <div class="pulse-dot" id="pulse"></div>
+      <span id="status-text">Checking…</span>
+      <span class="status-uptime" id="uptime-text"></span>
+    </div>
+
+    <!-- METRIC RINGS -->
+    <div class="grid-4">
+      <div class="card metric-card">
+        <div class="ring-wrap">
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <circle class="ring-bg"   cx="60" cy="60" r="48"/>
+            <circle class="ring-fill" cx="60" cy="60" r="48" id="cpu-ring" stroke="var(--blue)"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-val" id="cpu-val">—</div>
+            <div class="ring-unit">%</div>
+          </div>
+        </div>
+        <div class="metric-label">CPU Usage</div>
+        <div class="metric-sub">System</div>
+      </div>
+
+      <div class="card metric-card">
+        <div class="ring-wrap">
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <circle class="ring-bg"   cx="60" cy="60" r="48"/>
+            <circle class="ring-fill" cx="60" cy="60" r="48" id="ram-ring" stroke="var(--green)"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-val" id="ram-pct">—</div>
+            <div class="ring-unit">%</div>
+          </div>
+        </div>
+        <div class="metric-label">Memory</div>
+        <div class="metric-sub" id="ram-val">— / — MB</div>
+      </div>
+
+      <div class="card metric-card">
+        <div class="ring-wrap">
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <circle class="ring-bg"   cx="60" cy="60" r="48"/>
+            <circle class="ring-fill" cx="60" cy="60" r="48" id="proc-cpu-ring" stroke="var(--yellow)"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-val" id="proc-cpu-val">—</div>
+            <div class="ring-unit">%</div>
+          </div>
+        </div>
+        <div class="metric-label">Process CPU</div>
+        <div class="metric-sub" id="proc-threads">— threads</div>
+      </div>
+
+      <div class="card metric-card">
+        <div class="ring-wrap">
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <circle class="ring-bg"   cx="60" cy="60" r="48"/>
+            <circle class="ring-fill" cx="60" cy="60" r="48" id="proc-mem-ring" stroke="var(--blue)"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-val" id="proc-mem-val">—</div>
+            <div class="ring-unit">MB</div>
+          </div>
+        </div>
+        <div class="metric-label">Process Mem</div>
+        <div class="metric-sub" id="proc-pid">PID —</div>
+      </div>
+    </div>
+
+    <!-- STATS ROW -->
+    <div class="grid-3">
+      <div class="card stat-card">
+        <div class="stat-icon icon-blue">👤</div>
+        <div class="stat-info">
+          <div class="stat-num" id="user-count">—</div>
+          <div class="stat-lbl">Total Users</div>
+        </div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-icon icon-green">🔗</div>
+        <div class="stat-info">
+          <div class="stat-num" id="url-count">—</div>
+          <div class="stat-lbl">Short URLs</div>
+        </div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-icon icon-purple">⚡</div>
+        <div class="stat-info">
+          <div class="stat-num" id="event-count">—</div>
+          <div class="stat-lbl">Recent Events</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ERROR RATE + AVG RESPONSE -->
+    <div class="grid-2">
+      <div class="card colored-stat">
+        <div>
+          <span class="colored-num c-green" id="error-rate-val">—</span><span class="colored-unit">%</span>
+        </div>
+        <div class="colored-lbl">Error Rate (4xx / 5xx)</div>
+      </div>
+      <div class="card colored-stat">
+        <div>
+          <span class="colored-num c-green" id="avg-response-val">—</span><span class="colored-unit">ms</span>
+        </div>
+        <div class="colored-lbl">Avg Response Time</div>
+      </div>
+    </div>
+
+    <!-- REQUEST RATE SPARKLINE -->
+    <div class="sparkline-card">
+      <div class="panel-header">
+        <span class="section-title">Request Rate</span>
+        <span class="section-badge" id="req-rate-badge">0 req/5s</span>
+      </div>
+      <div class="sparkline-body">
+        <svg id="sparkline-svg" viewBox="0 0 480 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="spark-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stop-color="#3b82f6" stop-opacity="0.35"/>
+              <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.02"/>
+            </linearGradient>
+          </defs>
+          <path id="sparkline-area" fill="url(#spark-grad)"/>
+          <polyline id="sparkline-line" fill="none" stroke="#3b82f6" stroke-width="2.5"
+                    stroke-linejoin="round" stroke-linecap="round"/>
+        </svg>
+        <div class="sparkline-axis">
+          <span>2m ago</span><span>1.5m</span><span>1m</span><span>30s</span><span>now</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOP ENDPOINTS + ACTIVE URLs -->
+    <div class="grid-2-l">
+
+      <div class="panel-card">
+        <div class="panel-header">
+          <span class="section-title">Top Endpoints</span>
+          <span class="section-badge">Last 200 reqs</span>
+        </div>
+        <div id="endpoints-list">
+          <div class="empty-state">No request data yet.</div>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-header">
+          <span class="section-title">Active URLs</span>
+          <span class="section-badge">Most Recent</span>
+        </div>
+        <div id="active-urls-list">
+          <div class="empty-state">Loading…</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- LIVE LOG FEED -->
+    <div id="log-feed">
+      <div class="panel-header">
+        <span class="section-title">Live Log Feed</span>
+        <span class="section-badge">● Live</span>
+      </div>
+      <div id="log-list">
+        <div class="empty-state">Loading logs…</div>
+      </div>
+    </div>
+
+    <!-- EVENTS TABLE -->
+    <div id="events-section">
+      <div class="panel-header">
+        <span class="section-title">Recent Events</span>
+        <span class="section-badge">Last 10</span>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Type</th><th>URL ID</th><th>User ID</th><th>Timestamp</th></tr>
+        </thead>
+        <tbody id="events-tbody">
+          <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:28px">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
+  <script>
+    const CIRCUMFERENCE = 301.6; // 2π × r=48
+
+    // ── helpers ───────────────────────────────────────────────────────────────
+
+    function fmtUptime(secs) {
+      const h = Math.floor(secs / 3600), m = Math.floor((secs % 3600) / 60), s = secs % 60;
+      if (h > 0) return `${h}h ${m}m ${s}s`;
+      if (m > 0) return `${m}m ${s}s`;
+      return `${s}s`;
+    }
+
+    function fmtTime(iso) {
+      try { return new Date(iso).toLocaleTimeString("en-US", { hour12: false }); }
+      catch { return iso; }
+    }
+
+    function truncate(str, n) {
+      if (!str) return "—";
+      return str.length > n ? str.slice(0, n) + "…" : str;
+    }
+
+    function setRing(ringId, pct) {
+      const el = document.getElementById(ringId);
+      if (!el) return;
+      const clamped = Math.min(Math.max(pct, 0), 100);
+      el.style.strokeDashoffset = CIRCUMFERENCE * (1 - clamped / 100);
+      el.style.stroke = clamped < 50 ? "var(--green)" : clamped < 75 ? "var(--yellow)" : "var(--red)";
+    }
+
+    function statusClass(code) {
+      if (code >= 500) return "status-5xx";
+      if (code >= 400) return "status-4xx";
+      return "status-2xx";
+    }
+
+    function eventClass(type) {
+      if (!type) return "event-other";
+      const t = type.toLowerCase();
+      if (t.includes("creat")) return "event-created";
+      if (t.includes("delet")) return "event-deleted";
+      if (t.includes("updat")) return "event-updated";
+      return "event-other";
+    }
+
+    // ── safe fetch ────────────────────────────────────────────────────────────
+
+    async function safeFetch(url) {
+      try {
+        const r = await fetch(url);
+        if (!r.ok) throw new Error(`${r.status}`);
+        return await r.json();
+      } catch (e) {
+        console.warn(`fetch ${url} failed:`, e);
+        return null;
+      }
+    }
+
+    // ── /health ───────────────────────────────────────────────────────────────
+
+    async function pollHealth() {
+      try {
+        const r = await fetch("/health");
+        const data = await r.json();
+        const ok = r.ok && data.status === "ok";
+        document.getElementById("status-banner").className = ok ? "healthy" : "degraded";
+        document.getElementById("pulse").className = "pulse-dot" + (ok ? "" : " red");
+        const txt = document.getElementById("status-text");
+        txt.className   = ok ? "" : "red";
+        txt.textContent = ok ? "All Systems Operational" : "Service Degraded";
+      } catch {
+        const txt = document.getElementById("status-text");
+        txt.className = "red"; txt.textContent = "Unreachable";
+      }
+    }
+
+    // ── /metrics ──────────────────────────────────────────────────────────────
+
+    async function pollMetrics() {
+      try {
+        const data = await fetch("/metrics").then(r => r.json());
+        document.getElementById("uptime-text").textContent = "Uptime: " + fmtUptime(data.uptime_seconds);
+
+        const cpu = data.cpu_percent ?? 0;
+        document.getElementById("cpu-val").textContent = cpu.toFixed(1);
+        setRing("cpu-ring", cpu);
+
+        const ramUsed = data.memory?.used_mb ?? 0, ramTotal = data.memory?.total_mb ?? 1, ramPct = data.memory?.percent ?? 0;
+        document.getElementById("ram-pct").textContent = ramPct.toFixed(1);
+        document.getElementById("ram-val").textContent = `${Math.round(ramUsed)} / ${Math.round(ramTotal)} MB`;
+        setRing("ram-ring", ramPct);
+
+        const pCpu = data.process?.cpu_percent ?? 0;
+        document.getElementById("proc-cpu-val").textContent = pCpu.toFixed(1);
+        document.getElementById("proc-threads").textContent = `${data.process?.threads ?? "—"} threads`;
+        setRing("proc-cpu-ring", pCpu);
+
+        const pMem = data.process?.memory_mb ?? 0;
+        document.getElementById("proc-mem-val").textContent = pMem.toFixed(1);
+        document.getElementById("proc-pid").textContent = `PID ${data.process?.pid ?? "—"}`;
+        setRing("proc-mem-ring", Math.min((pMem / 500) * 100, 100));
+
+      } catch (e) { console.warn("metrics error", e); }
+    }
+
+    // ── log stats helpers ─────────────────────────────────────────────────────
+
+    function computeLogStats(logs) {
+      const reqs  = logs.filter(e => e.method);
+      const total = reqs.length;
+      if (!total) return { errorRate: 0, avgDuration: 0, topEndpoints: [] };
+
+      const errors      = reqs.filter(e => e.status >= 400).length;
+      const errorRate   = errors / total * 100;
+      const durs        = reqs.filter(e => e.duration_ms != null).map(e => e.duration_ms);
+      const avgDuration = durs.length ? durs.reduce((a, b) => a + b, 0) / durs.length : 0;
+
+      const counts = {};
+      reqs.forEach(e => { const p = e.path || "unknown"; counts[p] = (counts[p] || 0) + 1; });
+      const topEndpoints = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 7);
+
+      return { errorRate, avgDuration, topEndpoints };
+    }
+
+    function computeSparkline(logs) {
+      const now = Date.now();
+      const BUCKETS = 24, BUCKET_S = 5;
+      const data = new Array(BUCKETS).fill(0);
+      logs.filter(e => e.method && e.timestamp).forEach(e => {
+        const age = (now - new Date(e.timestamp).getTime()) / 1000;
+        if (age >= 0 && age < BUCKETS * BUCKET_S) {
+          const idx = BUCKETS - 1 - Math.floor(age / BUCKET_S);
+          if (idx >= 0) data[idx]++;
+        }
+      });
+      return data;
+    }
+
+    function drawSparkline(data) {
+      const W = 480, H = 80, PT = 6, PB = 6;
+      const usable = H - PT - PB;
+      const max    = Math.max(...data, 1);
+      const n      = data.length;
+      const step   = W / (n - 1);
+
+      const pts = data.map((v, i) => ({ x: i * step, y: PT + (1 - v / max) * usable }));
+      const lineStr = pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+      const areaStr = `M${pts[0].x},${H} ` + pts.map(p => `L${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ") + ` L${pts[n-1].x},${H} Z`;
+
+      document.getElementById("sparkline-line").setAttribute("points", lineStr);
+      document.getElementById("sparkline-area").setAttribute("d", areaStr);
+      document.getElementById("req-rate-badge").textContent = `${data[data.length - 1]} req/5s`;
+    }
+
+    function colorClass(val, warn, danger) {
+      return val >= danger ? "c-red" : val >= warn ? "c-yellow" : "c-green";
+    }
+
+    // ── /logs ─────────────────────────────────────────────────────────────────
+
+    async function pollLogs() {
+      try {
+        const logs   = await fetch("/logs").then(r => r.json());
+        const recent = [...logs].reverse().slice(0, 50);
+        const list   = document.getElementById("log-list");
+
+        if (!recent.length) {
+          list.innerHTML = '<div class="empty-state">No logs yet.</div>';
+        } else {
+          list.innerHTML = recent.map(e => {
+            const lvl    = e.level || "INFO";
+            const time   = fmtTime(e.timestamp);
+            const method = e.method || "—";
+            const path   = e.path || e.message || "—";
+            const status = e.status ?? "";
+            const dur    = e.duration_ms != null ? e.duration_ms + "ms" : "";
+            const stCls  = status ? statusClass(status) : "";
+            return `<div class="log-entry">
+              <span class="log-time">${time}</span>
+              <span class="log-level level-${lvl}">${lvl}</span>
+              <span class="log-method">${method}</span>
+              <span class="${stCls}">${status}</span>
+              <span class="log-path">${path}</span>
+              <span class="log-dur">${dur}</span>
+            </div>`;
+          }).join("");
+        }
+
+        // Derived stats from full log buffer
+        const { errorRate, avgDuration, topEndpoints } = computeLogStats(logs);
+
+        const errEl  = document.getElementById("error-rate-val");
+        errEl.textContent = errorRate.toFixed(1);
+        errEl.className   = "colored-num " + colorClass(errorRate, 5, 15);
+
+        const respEl = document.getElementById("avg-response-val");
+        respEl.textContent = Math.round(avgDuration);
+        respEl.className   = "colored-num " + colorClass(avgDuration, 200, 500);
+
+        drawSparkline(computeSparkline(logs));
+
+        const endList = document.getElementById("endpoints-list");
+        if (!topEndpoints.length) {
+          endList.innerHTML = '<div class="empty-state">No requests yet.</div>';
+        } else {
+          const maxC = topEndpoints[0][1];
+          endList.innerHTML = topEndpoints.map(([path, count], i) => `
+            <div class="endpoint-row">
+              <span class="endpoint-rank">${i + 1}</span>
+              <span class="endpoint-path">${path}</span>
+              <div class="endpoint-bar-wrap">
+                <div class="endpoint-bar" style="width:${(count / maxC * 100).toFixed(0)}%"></div>
+              </div>
+              <span class="endpoint-count">${count}</span>
+            </div>
+          `).join("");
+        }
+
+      } catch (e) { console.warn("logs error", e); }
+    }
+
+    // ── app data ──────────────────────────────────────────────────────────────
+
+    async function pollAppData() {
+      const [users, urls, events] = await Promise.all([
+        safeFetch("/users"),
+        safeFetch("/urls"),
+        safeFetch("/events"),
+      ]);
+
+      document.getElementById("user-count").textContent  = Array.isArray(users)  ? users.length  : "—";
+      document.getElementById("url-count").textContent   = Array.isArray(urls)   ? urls.length   : "—";
+      document.getElementById("event-count").textContent = Array.isArray(events) ? events.length : "—";
+
+      // Active URLs panel
+      const urlContainer = document.getElementById("active-urls-list");
+      if (!urls) {
+        urlContainer.innerHTML = '<div class="empty-state" style="color:var(--red)">Failed to load URLs.</div>';
+      } else if (!urls.length) {
+        urlContainer.innerHTML = '<div class="empty-state">No URLs yet.</div>';
+      } else {
+        const sorted = [...urls]
+          .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+          .slice(0, 8);
+        urlContainer.innerHTML = sorted.map(u => `
+          <div class="url-row">
+            <span class="url-code">${u.short_code || "—"}</span>
+            <span class="url-original">${truncate(u.original_url, 30)}</span>
+            <span class="${u.is_active ? 'url-active' : 'url-inactive'}">${u.is_active ? '● on' : '○ off'}</span>
+          </div>
+        `).join("");
+      }
+
+      // Events table
+      const tbody = document.getElementById("events-tbody");
+      if (!events) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--red);padding:24px;font-size:13px">Failed to load events.</td></tr>';
+        return;
+      }
+      if (!events.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No events yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = events.slice(0, 10).map(ev => {
+        const type  = ev.event_type || ev.type || "unknown";
+        const urlId = ev.url_id ?? ev.url ?? "—";
+        const uid   = ev.user_id ?? ev.user ?? "—";
+        const ts    = ev.timestamp ? fmtTime(ev.timestamp) : "—";
+        return `<tr>
+          <td><span class="event-type ${eventClass(type)}">${type}</span></td>
+          <td>${urlId}</td><td>${uid}</td><td>${ts}</td>
+        </tr>`;
+      }).join("");
+    }
+
+    // ── polling ───────────────────────────────────────────────────────────────
+
+    function updateTimestamp() {
+      document.getElementById("last-updated").textContent =
+        "Updated " + new Date().toLocaleTimeString("en-US", { hour12: false });
+    }
+
+    async function fastPoll() {
+      await Promise.all([pollHealth(), pollMetrics(), pollLogs()]);
+      updateTimestamp();
+    }
+
+    fastPoll();
+    pollAppData();
+    setInterval(fastPoll,    5000);
+    setInterval(pollAppData, 15000);
+  </script>
+</body>
+</html>
