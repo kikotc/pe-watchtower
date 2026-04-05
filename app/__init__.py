@@ -1,3 +1,4 @@
+import logging
 import time
 
 from dotenv import load_dotenv
@@ -33,7 +34,6 @@ def create_app():
             else "WARNING" if response.status_code >= 400
             else "INFO"
         )
-        import logging
         logger.log(
             getattr(logging, level),
             "request",

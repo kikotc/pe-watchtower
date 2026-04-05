@@ -82,8 +82,10 @@ def shorten_url():
             created_at=now,
             updated_at=now,
         )
-    except IntegrityError:
-        return jsonify({"error": "Short code collision"}), 409
+    except IntegrityError as e:
+        if "short_code" in str(e):
+            return jsonify({"error": "Short code collision"}), 409
+        return jsonify({"error": "Database error creating URL"}), 500
 
     # Log the creation event
     Event.create(

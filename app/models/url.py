@@ -13,7 +13,7 @@ from app.models.user import User
 
 class Url(BaseModel):
     id = AutoField()
-    user = ForeignKeyField(User, backref="urls", on_delete="CASCADE")
+    user = ForeignKeyField(User, backref="urls", on_delete="CASCADE", null=True)
     short_code = CharField(unique=True, max_length=10)
     original_url = TextField()
     title = CharField(default="")

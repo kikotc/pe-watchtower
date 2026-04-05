@@ -38,3 +38,6 @@ judging/
 
 # Seed data
 seed_data/
+
+# Log files
+logs/
