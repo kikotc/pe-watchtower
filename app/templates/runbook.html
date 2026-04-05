@@ -396,11 +396,15 @@
         <div class="quick-nav-label">Jump To</div>
         <a href="#service-down" class="quick-link critical"><span class="quick-link-num">1</span>Service Down</a>
         <a href="#high-error-rate" class="quick-link warning"><span class="quick-link-num">2</span>High Error Rate</a>
-        <a href="#service-recovered" class="quick-link ok"><span class="quick-link-num">3</span>Recovered</a>
-        <a href="#debugging" class="quick-link"><span class="quick-link-num">4</span>Debugging</a>
-        <a href="#restart" class="quick-link"><span class="quick-link-num">5</span>Restart</a>
-        <a href="#slo-breach" class="quick-link"><span class="quick-link-num">6</span>SLO</a>
-        <a href="#key-endpoints" class="quick-link"><span class="quick-link-num">7</span>Endpoints</a>
+        <a href="#burn-rate" class="quick-link warning"><span class="quick-link-num">3</span>Burn Rate</a>
+        <a href="#self-healing" class="quick-link"><span class="quick-link-num">4</span>Self-Healing</a>
+        <a href="#service-recovered" class="quick-link ok"><span class="quick-link-num">5</span>Recovered</a>
+        <a href="#chaos" class="quick-link"><span class="quick-link-num">6</span>Chaos</a>
+        <a href="#debugging" class="quick-link"><span class="quick-link-num">7</span>Debugging</a>
+        <a href="#restart" class="quick-link"><span class="quick-link-num">8</span>Restart</a>
+        <a href="#slo-breach" class="quick-link"><span class="quick-link-num">9</span>SLO</a>
+        <a href="#latency" class="quick-link"><span class="quick-link-num">10</span>Latency</a>
+        <a href="#key-endpoints" class="quick-link"><span class="quick-link-num">11</span>Endpoints</a>
       </div>
     </div>
 
@@ -413,12 +417,16 @@
       <ul class="toc-list">
         <li><a href="#service-down"><span class="toc-num" style="background:rgba(239,68,68,0.2);color:var(--red)">1</span>Alert: Service Down</a></li>
         <li><a href="#high-error-rate"><span class="toc-num" style="background:rgba(245,158,11,0.2);color:var(--yellow)">2</span>Alert: High Error Rate</a></li>
-        <li><a href="#service-recovered"><span class="toc-num" style="background:rgba(16,185,129,0.2);color:var(--green)">3</span>Alert: Service Recovered</a></li>
+        <li><a href="#burn-rate"><span class="toc-num" style="background:rgba(139,92,246,0.2);color:#a78bfa">3</span>Alert: SLO Burn Rate Critical</a></li>
+        <li><a href="#self-healing"><span class="toc-num" style="background:rgba(59,130,246,0.2);color:var(--blue)">4</span>Alert: Auto-Remediation / Self-Healing</a></li>
+        <li><a href="#service-recovered"><span class="toc-num" style="background:rgba(16,185,129,0.2);color:var(--green)">5</span>Alert: Service Recovered</a></li>
         <div class="toc-sep"></div>
-        <li><a href="#debugging"><span class="toc-num">4</span>General Debugging Steps</a></li>
-        <li><a href="#restart"><span class="toc-num">5</span>Starting &amp; Restarting Everything</a></li>
-        <li><a href="#slo-breach"><span class="toc-num">6</span>SLO Breach Response</a></li>
-        <li><a href="#key-endpoints"><span class="toc-num">7</span>Key Endpoints Reference</a></li>
+        <li><a href="#chaos"><span class="toc-num">6</span>Chaos Engineering</a></li>
+        <li><a href="#debugging"><span class="toc-num">7</span>General Debugging Steps</a></li>
+        <li><a href="#restart"><span class="toc-num">8</span>Starting &amp; Restarting Everything</a></li>
+        <li><a href="#slo-breach"><span class="toc-num">9</span>SLO Breach Response</a></li>
+        <li><a href="#latency"><span class="toc-num">10</span>Alerting Latency</a></li>
+        <li><a href="#key-endpoints"><span class="toc-num">11</span>Key Endpoints Reference</a></li>
       </ul>
     </div>
 
@@ -546,7 +554,108 @@ python3 seed.py</code></pre>
       </div>
     </div>
 
-    <!-- ── 3. SERVICE RECOVERED ── -->
+    <!-- ── 3. SLO BURN RATE ── -->
+    <div class="section">
+      <span class="section-anchor" id="burn-rate"></span>
+      <div class="alert-card yellow" style="border-color:rgba(139,92,246,0.35);background:rgba(139,92,246,0.04);box-shadow:0 0 40px rgba(139,92,246,0.07)">
+        <div class="alert-top-bar" style="background:linear-gradient(90deg,#a78bfa,transparent)"></div>
+        <div class="alert-body">
+          <div class="alert-header">
+            <div class="alert-icon-wrap" style="background:rgba(139,92,246,0.15)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10"/><path d="M13 2.05A10 10 0 0 1 22 12"/><line x1="12" y1="12" x2="12" y2="6"/></svg>
+            </div>
+            <span class="alert-title">Alert: SLO Burn Rate Critical</span>
+            <span class="alert-badge" style="color:#a78bfa;background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.3)">Warning</span>
+          </div>
+          <div class="alert-trigger">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Triggered when error budget is being consumed <strong style="color:var(--faint)">faster than 14.4x</strong> the expected rate (Google SRE threshold). At this pace, the monthly SLO budget will be exhausted in under 2 days.
+          </div>
+          <ol class="steps">
+            <li class="step">
+              <div class="step-left"><div class="step-num" style="background:rgba(139,92,246,0.2);color:#a78bfa;border:1px solid rgba(139,92,246,0.3)">1</div><div class="step-line" style="background:linear-gradient(to bottom,rgba(139,92,246,0.25),transparent)"></div></div>
+              <div class="step-body">
+                <strong>Check the SLO widget on the Overview tab</strong>
+                <p>Look at the Burn Rate (1h) and Burn Rate (6h) values. If only 1h is spiking but 6h is low, it may be a brief incident. If both are high, it's a sustained problem.</p>
+              </div>
+            </li>
+            <li class="step">
+              <div class="step-left"><div class="step-num" style="background:rgba(139,92,246,0.2);color:#a78bfa;border:1px solid rgba(139,92,246,0.3)">2</div><div class="step-line" style="background:linear-gradient(to bottom,rgba(139,92,246,0.25),transparent)"></div></div>
+              <div class="step-body">
+                <strong>Identify the error source</strong>
+                <p>Check the Error Classification panel and Recent Failures panel on the dashboard. Look for patterns — all errors from one endpoint means that route is broken; a mix of errors means a systemic issue (database, dependency).</p>
+              </div>
+            </li>
+            <li class="step">
+              <div class="step-left"><div class="step-num" style="background:rgba(139,92,246,0.2);color:#a78bfa;border:1px solid rgba(139,92,246,0.3)">3</div></div>
+              <div class="step-body">
+                <strong>Fix and verify</strong>
+                <p>Fix the root cause, then watch the SLO widget. Burn rate should drop below 1.0x once errors stop.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 4. SELF-HEALING ── -->
+    <div class="section">
+      <span class="section-anchor" id="self-healing"></span>
+      <div class="alert-card" style="border-color:rgba(59,130,246,0.35);background:rgba(59,130,246,0.04);box-shadow:0 0 40px rgba(59,130,246,0.07)">
+        <div class="alert-top-bar" style="background:linear-gradient(90deg,var(--blue),transparent)"></div>
+        <div class="alert-body">
+          <div class="alert-header">
+            <div class="alert-icon-wrap" style="background:rgba(59,130,246,0.15)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            </div>
+            <span class="alert-title">Alert: Auto-Remediation / Self-Healing</span>
+            <span class="alert-badge" style="color:var(--blue);background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3)">Auto</span>
+          </div>
+          <div class="alert-trigger">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            The monitor detected the Flask app was down for <strong style="color:var(--faint)">2+ consecutive checks</strong> and automatically attempted to restart it.
+          </div>
+          <ol class="steps">
+            <li class="step">
+              <div class="step-left"><div class="step-num num-blue">1</div><div class="step-line line-blue"></div></div>
+              <div class="step-body">
+                <strong>How it works</strong>
+                <p>After 2 consecutive failed health checks (about 30s), the monitor spawns a new Flask process. It waits 30s between attempts (cooldown) and tries up to 5 times before giving up and firing a "Self-Healing Exhausted" alert. Output from the restarted process goes to <code>logs/self-heal.log</code>.</p>
+              </div>
+            </li>
+            <li class="step">
+              <div class="step-left"><div class="step-num num-blue">2</div><div class="step-line line-blue"></div></div>
+              <div class="step-body">
+                <strong>If self-healing succeeded</strong>
+                <p>No action needed. Check the Remediation Log on the Chaos tab to see what happened. A Recovery alert will fire on Discord.</p>
+              </div>
+            </li>
+            <li class="step">
+              <div class="step-left"><div class="step-num num-blue">3</div></div>
+              <div class="step-body">
+                <strong>If self-healing exhausted (5 failed attempts)</strong>
+                <p>Manual intervention required:</p>
+                <pre><div class="pre-bar"><span class="pre-dot pre-dot-r"></span><span class="pre-dot pre-dot-y"></span><span class="pre-dot pre-dot-g"></span><span class="pre-label">terminal</span></div><code class="pre-code"># Check what's preventing startup
+cat logs/self-heal.log
+
+# Common causes:
+# - Port 5001 still in use by zombie process
+lsof -i :5001
+kill -9 $(lsof -ti:5001)
+
+# - Database down
+docker start postgres
+
+# Then manually restart
+uv run python run.py</code></pre>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 5. SERVICE RECOVERED ── -->
     <div class="section">
       <span class="section-anchor" id="service-recovered"></span>
       <div class="alert-card green">
@@ -571,7 +680,33 @@ python3 seed.py</code></pre>
       </div>
     </div>
 
-    <!-- ── 4. GENERAL DEBUGGING ── -->
+    <!-- ── 6. CHAOS ENGINEERING ── -->
+    <div class="section">
+      <span class="section-anchor" id="chaos"></span>
+      <h2 class="section-h2">
+        <div class="section-h2-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        Chaos Engineering
+      </h2>
+      <p style="color:var(--faint);font-size:14px;margin-bottom:16px">The Chaos tab on the dashboard lets you inject faults to test monitoring and self-healing.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div class="info-cell"><div class="label">Latency Injection</div><div class="val" style="font-size:12px">Adds 2s delay to user-facing requests. Shows in Response Time ring and p99 charts.</div></div>
+        <div class="info-cell"><div class="label">Error Storm</div><div class="val" style="font-size:12px">Returns 500 on ~50% of user-facing requests. Triggers Error Rate alert, SLO burn rate, Recent Failures.</div></div>
+        <div class="info-cell"><div class="label">Database Kill</div><div class="val" style="font-size:12px">Severs DB connection and prevents reconnect. Causes Health check degraded, Error Classification entries.</div></div>
+        <div class="info-cell"><div class="label">CPU Stress</div><div class="val" style="font-size:12px">Burns CPU cycles. Visible in CPU metric ring.</div></div>
+        <div class="info-cell"><div class="label">Kill Process</div><div class="val" style="font-size:12px">Sends SIGTERM to Flask. Triggers Service Down alert and Self-Healing.</div></div>
+        <div class="info-cell"><div class="label">Traffic Generator</div><div class="val" style="font-size:12px">Sends synthetic requests so chaos effects are visible in metrics. Use before other experiments.</div></div>
+      </div>
+
+      <div class="callout warn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Use "Generate Traffic" first so there are requests for chaos to affect. Observability endpoints (<code>/health</code>, <code>/metrics</code>, <code>/logs</code>) are excluded from chaos to keep monitoring working.
+      </div>
+    </div>
+
+    <!-- ── 7. GENERAL DEBUGGING ── -->
     <div class="section">
       <span class="section-anchor" id="debugging"></span>
       <h2 class="section-h2">
@@ -704,7 +839,36 @@ python3 seed.py</code></pre>
       </ol>
     </div>
 
-    <!-- ── 7. ENDPOINTS REFERENCE ── -->
+    <!-- ── 10. ALERTING LATENCY ── -->
+    <div class="section">
+      <span class="section-anchor" id="latency"></span>
+      <h2 class="section-h2">
+        <div class="section-h2-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        Alerting Latency &amp; Response Objectives
+      </h2>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div class="info-cell"><div class="label">Check Interval</div><div class="val">15 seconds</div></div>
+        <div class="info-cell"><div class="label">Worst-Case Detection</div><div class="val">15 seconds</div></div>
+        <div class="info-cell"><div class="label">Typical Detection</div><div class="val">~7.5 seconds</div></div>
+        <div class="info-cell"><div class="label">Discord Dispatch</div><div class="val">&lt; 1 second</div></div>
+        <div class="info-cell" style="border-left:3px solid rgba(16,185,129,0.5)"><div class="label">Total Alerting Latency</div><div class="val" style="color:var(--green)">&lt; 16 seconds</div></div>
+        <div class="info-cell" style="border-left:3px solid rgba(16,185,129,0.5)"><div class="label">5-Min SLO Met?</div><div class="val" style="color:var(--green)">Yes (18.75x margin)</div></div>
+        <div class="info-cell"><div class="label">Self-Healing Trigger</div><div class="val">~30 seconds (2 failed checks)</div></div>
+        <div class="info-cell"><div class="label">Alert Cooldown</div><div class="val">5 minutes</div></div>
+        <div class="info-cell"><div class="label">Self-Healing Cooldown</div><div class="val">30 seconds</div></div>
+        <div class="info-cell"><div class="label">Max Restart Attempts</div><div class="val">5</div></div>
+      </div>
+
+      <div class="callout info">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        The monitor process runs independently of the Flask application on a separate port (5002), ensuring alerting continues even during complete application outages.
+      </div>
+    </div>
+
+    <!-- ── 11. ENDPOINTS REFERENCE ── -->
     <div class="section">
       <span class="section-anchor" id="key-endpoints"></span>
       <h2 class="section-h2">
@@ -740,6 +904,22 @@ python3 seed.py</code></pre>
         <div class="info-cell port-5002"><div class="label">Log File History</div><div class="val"><span class="method">GET</span>/dashboard/history</div></div>
         <div class="info-cell port-5002"><div class="label">SLO Status</div><div class="val"><span class="method">GET</span>/dashboard/slo</div></div>
         <div class="info-cell port-5002"><div class="label">Incident Log</div><div class="val"><span class="method">GET</span>/dashboard/incidents</div></div>
+        <div class="info-cell port-5002"><div class="label">Remediation Log</div><div class="val"><span class="method">GET</span>/dashboard/remediation-log</div></div>
+      </div>
+
+      <p style="font-size:12px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--muted);margin:20px 0 10px;display:flex;align-items:center;gap:6px">
+        <span style="width:10px;height:10px;border-radius:50%;background:var(--yellow);display:inline-block;box-shadow:0 0 6px var(--yellow)"></span>
+        Chaos Engineering — localhost:5001
+      </p>
+      <div class="info-grid">
+        <div class="info-cell port-5001"><div class="label">Chaos Status</div><div class="val"><span class="method">GET</span>/chaos/status</div></div>
+        <div class="info-cell port-5001"><div class="label">Inject Latency</div><div class="val"><span class="method" style="color:var(--yellow)">POST</span>/chaos/latency</div></div>
+        <div class="info-cell port-5001"><div class="label">Error Storm</div><div class="val"><span class="method" style="color:var(--yellow)">POST</span>/chaos/error-rate</div></div>
+        <div class="info-cell port-5001"><div class="label">Kill Database</div><div class="val"><span class="method" style="color:var(--yellow)">POST</span>/chaos/db-kill</div></div>
+        <div class="info-cell port-5001"><div class="label">CPU Stress</div><div class="val"><span class="method" style="color:var(--yellow)">POST</span>/chaos/cpu-stress</div></div>
+        <div class="info-cell port-5001"><div class="label">Kill Process</div><div class="val"><span class="method" style="color:var(--yellow)">POST</span>/chaos/crash</div></div>
+        <div class="info-cell port-5001"><div class="label">Generate Traffic</div><div class="val"><span class="method" style="color:var(--yellow)">POST</span>/chaos/traffic</div></div>
+        <div class="info-cell port-5001"><div class="label">Clear All</div><div class="val"><span class="method" style="color:var(--yellow)">POST</span>/chaos/clear</div></div>
       </div>
     </div>
 

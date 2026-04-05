@@ -5,6 +5,24 @@ Use this runbook whenever an alert fires or something feels wrong.
 
 ---
 
+## Alerting Latency & Response Objectives
+
+| Metric | Value | Detail |
+|--------|-------|--------|
+| **Check interval** | 15 seconds | Monitor polls `/health` and `/logs` every 15s |
+| **Worst-case detection latency** | 15 seconds | An incident occurring right after a check is detected on the next cycle |
+| **Typical detection latency** | ~7.5 seconds | Average half-interval |
+| **Discord alert dispatch** | < 1 second | Webhook POST after detection |
+| **Total alerting latency** | < 16 seconds | Well within the 5-minute response objective |
+| **Self-healing trigger** | ~30 seconds | After 2 consecutive failed checks (2 x 15s) |
+| **Alert cooldown** | 5 minutes | Same alert type suppressed for 300s to prevent spam |
+| **Self-healing cooldown** | 30 seconds | Between restart attempts |
+| **Max restart attempts** | 5 | Before manual intervention alert fires |
+
+The monitor process runs independently of the Flask application on a separate port (5002), ensuring alerting continues even during complete application outages.
+
+---
+
 ## Quick Reference
 
 | What | Where |
@@ -192,6 +210,78 @@ Every log line is JSON. Key fields:
 | `/health` not responding | 🔴 Critical | Follow Service Down runbook immediately |
 | CPU > 90% sustained | ⚠️ Warning | Check for traffic spike or infinite loop |
 | Memory > 90% | ⚠️ Warning | Restart app, investigate memory leak |
+
+---
+
+## Alert: 🔥 SLO Burn Rate Critical
+
+**What it means:** Error budget is being consumed faster than 14.4x the expected rate (Google SRE threshold). At this pace, the monthly SLO budget will be exhausted in under 2 days.
+
+### Step 1 — Check the dashboard SLO widget
+Open the dashboard Overview tab. Look at the Burn Rate (1h) and Burn Rate (6h) values. If only 1h is spiking but 6h is low, it may be a brief incident. If both are high, it's a sustained problem.
+
+### Step 2 — Identify the error source
+Check the Error Classification panel and Recent Failures panel on the dashboard. Look for patterns:
+- All errors from one endpoint → that route is broken
+- Mix of errors → systemic issue (database, dependency)
+
+### Step 3 — Fix and verify
+Fix the root cause then watch the SLO widget. Burn rate should drop below 1.0x once errors stop.
+
+---
+
+## Alert: 🔧 Auto-Remediation / Self-Healing
+
+**What it means:** The monitor detected the Flask app was down for 2+ consecutive checks and automatically attempted to restart it.
+
+### How it works
+1. After 2 consecutive failed health checks (~30s), monitor spawns a new Flask process
+2. Waits 30 seconds between attempts (cooldown)
+3. Tries up to 5 times before giving up and firing a "Self-Healing Exhausted" alert
+4. Output from the restarted process goes to `logs/self-heal.log`
+
+### If self-healing succeeded
+No action needed. Check the Remediation Log on the Chaos tab to see what happened. A Recovery alert will fire on Discord.
+
+### If self-healing exhausted (5 failed attempts)
+Manual intervention required:
+```bash
+# Check what's preventing startup
+cat logs/self-heal.log
+
+# Common causes:
+# - Port 5001 still in use by zombie process
+lsof -i :5001
+kill -9 $(lsof -ti:5001)
+
+# - Database down
+docker start postgres
+
+# - Dependency issue
+uv sync
+
+# Then manually restart
+uv run python run.py
+```
+
+---
+
+## Chaos Engineering
+
+The Chaos tab on the dashboard lets you inject faults to test monitoring and self-healing. Available experiments:
+
+| Experiment | What it does | Detected by |
+|------------|-------------|-------------|
+| Latency Injection | Adds 2s delay to user-facing requests | Response Time metric ring, p99 charts |
+| Error Storm | Returns 500 on ~50% of user-facing requests | Error Rate alert, SLO burn rate, Recent Failures |
+| Database Kill | Severs DB connection, prevents reconnect | Health check (degraded), Error Classification |
+| CPU Stress | Burns CPU cycles | CPU metric ring |
+| Kill Process | Sends SIGTERM to Flask | Service Down alert, Self-Healing |
+
+**Important:** Use "Generate Traffic" first so there are requests for chaos to affect. Observability endpoints (`/health`, `/metrics`, `/logs`) are excluded from chaos to keep monitoring working.
+
+### Clearing experiments
+Click "Deactivate" on individual experiments or "Clear All" to stop everything.
 
 ---
 

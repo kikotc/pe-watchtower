@@ -31,7 +31,7 @@ load_dotenv()
 CHECK_INTERVAL       = int(os.environ.get("MONITOR_INTERVAL", 15))
 STARTUP_DELAY        = 3
 ALERT_COOLDOWN       = 300
-ERROR_RATE_THRESHOLD = 0.5
+ERROR_RATE_THRESHOLD = 0.25
 ERROR_RATE_WINDOW    = 120
 BASE_URL             = os.environ.get("APP_URL", "http://localhost:5001")
 UI_PORT              = int(os.environ.get("MONITOR_PORT", 5002))
@@ -64,6 +64,7 @@ _heal_tries      = 0
 _heal_consecutive_down = 0     # checks since last healthy
 _flask_proc: Optional[subprocess.Popen] = None
 _remediation_log: deque = deque(maxlen=50)  # ring buffer of events
+_alert_log: deque = deque(maxlen=50)       # ring buffer of fired alerts
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -95,6 +96,14 @@ def _read_log_file() -> list:
 
 def send_discord(embed: dict) -> None:
     webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
+    # Always record the alert locally regardless of webhook
+    _alert_log.append({
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "title": embed.get("title", ""),
+        "description": embed.get("description", ""),
+        "fields": embed.get("fields", []),
+        "color": embed.get("color", 0),
+    })
     if not webhook_url:
         return
     role_id = os.environ.get("DISCORD_ALERT_ROLE_ID")
@@ -202,10 +211,13 @@ def check_error_rate() -> None:
 
     now    = time.time()
     cutoff = now - ERROR_RATE_WINDOW
+    skip_paths = ("/health", "/metrics", "/logs", "/slo", "/incidents",
+                  "/uptime-history", "/error-classification", "/chaos", "/debug")
     recent = [e for e in buf
               if e.get("message") == "request"
               and isinstance(e.get("timestamp"), str)
-              and iso_to_epoch(e["timestamp"]) >= cutoff]
+              and iso_to_epoch(e["timestamp"]) >= cutoff
+              and not any(e.get("path", "").startswith(p) for p in skip_paths)]
 
     if len(recent) < 5:
         return
@@ -596,9 +608,7 @@ def error_classification_proxy():
 @ui.route("/dashboard/incidents")
 @_login_required
 def dashboard_incidents():
-    entries = _read_log_file()
-    fired   = [e for e in entries if "Alert fired" in e.get("message", "")]
-    return jsonify(fired[-20:])
+    return jsonify(list(_alert_log))
 
 
 # ── Chaos proxy routes ──────────────────────────────────────────────────────

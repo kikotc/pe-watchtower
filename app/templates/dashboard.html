@@ -1342,10 +1342,7 @@
           <div class="chaos-traffic-main">
             <div class="chaos-traffic-icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 15a3 3 0 0 1 3-3h10"/>
-                <path d="M7 19h6a3 3 0 0 0 0-6"/>
-                <path d="M14 5h3a3 3 0 1 1 0 6H7"/>
-                <path d="M15 9l2-2 2 2"/>
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
               </svg>
             </div>
             <div>
@@ -2038,12 +2035,14 @@
         list.innerHTML = '<div class="empty-state">No incidents recorded.</div>';
         return;
       }
+      const colorMap = {[0xE74C3C]:"var(--red)",[0x2ECC71]:"var(--green)",[0xE67E22]:"var(--yellow)",[0x9B59B6]:"#a855f7",[0x3498DB]:"var(--blue)",[0x8B0000]:"#dc2626"};
       list.innerHTML = [...data].reverse().map(e => {
         const time = e.timestamp ? fmtTime(e.timestamp) : "—";
-        const msg  = e.message || "Alert fired";
+        const title = e.title || "Alert";
+        const col = colorMap[e.color] || "var(--muted)";
         return `<div class="incident-row">
           <span class="incident-time">${time}</span>
-          <span class="incident-msg">${msg}</span>
+          <span class="incident-msg" style="color:${col}">${title}</span>
         </div>`;
       }).join("");
     }
@@ -2079,7 +2078,7 @@
     // Map experiment keys to their API action names and activate params
     const chaosConfig = {
       latency:    { action: "latency",    params: {delay_ms: 2000}, label: "Activate",  btnCls: "chaos-btn-warn" },
-      error_rate: { action: "error-rate", params: {rate: 0.5},      label: "Activate",  btnCls: "chaos-btn-danger" },
+      error_rate: { action: "error-rate", params: {rate: 0.8},      label: "Activate",  btnCls: "chaos-btn-danger" },
       db_kill:    { action: "db-kill",    params: {},                label: "Activate",  btnCls: "chaos-btn-danger" },
       cpu_stress: { action: "cpu-stress", params: {duration_s: 30}, label: "30s Burn",  btnCls: "chaos-btn-warn" },
     };
