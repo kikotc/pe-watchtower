@@ -4,9 +4,13 @@ def register_routes(app):
     from app.routes.events import events_bp
     from app.routes.observability import observability_bp
     from app.routes.dashboard import dashboard_bp
+    from app.routes.chaos import chaos_bp, init_chaos
 
     app.register_blueprint(users_bp)
     app.register_blueprint(urls_bp)
     app.register_blueprint(events_bp)
     app.register_blueprint(observability_bp)
     app.register_blueprint(dashboard_bp)
+    app.register_blueprint(chaos_bp)
+
+    init_chaos(app)

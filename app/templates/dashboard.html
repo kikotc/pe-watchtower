@@ -489,6 +489,87 @@
     }
     .time-btn:hover  { color: var(--text); border-color: var(--faint); }
     .time-btn.active { color: var(--blue); border-color: var(--blue); background: rgba(59,130,246,0.1); }
+
+    /* ── CHAOS ENGINEERING ── */
+    .chaos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .chaos-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 28px 24px; display: flex; flex-direction: column; align-items: center;
+      gap: 16px; text-align: center; position: relative; overflow: hidden;
+      transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;
+    }
+    .chaos-card:hover { transform: translateY(-2px); }
+    .chaos-card.chaos-active {
+      border-color: rgba(239,68,68,0.5);
+      box-shadow: 0 0 24px rgba(239,68,68,0.15);
+    }
+    .chaos-card.chaos-active::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--red), #f97316);
+    }
+    .chaos-icon {
+      width: 56px; height: 56px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+    }
+    .chaos-icon.ci-latency  { background: rgba(245,158,11,0.12); }
+    .chaos-icon.ci-error    { background: rgba(239,68,68,0.12); }
+    .chaos-icon.ci-db       { background: rgba(139,92,246,0.12); }
+    .chaos-icon.ci-cpu      { background: rgba(59,130,246,0.12); }
+    .chaos-icon.ci-crash    { background: rgba(239,68,68,0.15); }
+    .chaos-icon.ci-clear    { background: rgba(16,185,129,0.12); }
+    .chaos-title { font-size: 14px; font-weight: 700; color: #f1f5f9; }
+    .chaos-desc  { font-size: 12px; color: var(--muted); line-height: 1.4; }
+    .chaos-btn {
+      padding: 9px 24px; border-radius: 8px; border: 1px solid transparent;
+      font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+      transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.1s;
+    }
+    .chaos-btn:active { transform: scale(0.96); }
+    .chaos-btn-danger {
+      background: rgba(239,68,68,0.15); color: var(--red); border-color: rgba(239,68,68,0.3);
+    }
+    .chaos-btn-danger:hover { background: rgba(239,68,68,0.25); box-shadow: 0 0 12px rgba(239,68,68,0.2); }
+    .chaos-btn-warn {
+      background: rgba(245,158,11,0.15); color: var(--yellow); border-color: rgba(245,158,11,0.3);
+    }
+    .chaos-btn-warn:hover { background: rgba(245,158,11,0.25); box-shadow: 0 0 12px rgba(245,158,11,0.2); }
+    .chaos-btn-safe {
+      background: rgba(16,185,129,0.15); color: var(--green); border-color: rgba(16,185,129,0.3);
+    }
+    .chaos-btn-safe:hover { background: rgba(16,185,129,0.25); box-shadow: 0 0 12px rgba(16,185,129,0.2); }
+    .chaos-status-bar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 20px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--surface);
+      font-size: 14px; font-weight: 500;
+    }
+    .chaos-status-bar.chaos-hot {
+      border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.06);
+      box-shadow: 0 0 20px rgba(239,68,68,0.1);
+    }
+    .chaos-status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .chaos-status-dot.idle    { background: var(--green); animation: pulse 2s infinite; }
+    .chaos-status-dot.running { background: var(--red); animation: ring-danger 1.4s infinite; }
+
+    /* ── REMEDIATION LOG ── */
+    .remed-row {
+      display: grid; grid-template-columns: 80px 140px 1fr 50px;
+      gap: 12px; align-items: center;
+      padding: 10px 20px; border-bottom: 1px solid rgba(30,45,74,0.4);
+      font-family: "SF Mono","Fira Code",monospace; font-size: 12px;
+    }
+    .remed-row:last-child { border-bottom: none; }
+    .remed-time   { color: var(--muted); }
+    .remed-detail { color: var(--faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .remed-action {
+      font-weight: 600; padding: 2px 8px; border-radius: 4px; font-size: 10px;
+      letter-spacing: 0.4px; text-align: center;
+    }
+    .remed-restart  { color: var(--yellow); background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.25); }
+    .remed-restored { color: var(--green); background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); }
+    .remed-failed   { color: var(--red); background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); }
+    .remed-status   { text-align: center; font-weight: 600; font-size: 11px; }
   </style>
 </head>
 <body>
@@ -579,6 +660,7 @@
     <div class="tab-bar">
       <button class="tab-btn active" data-tab="overview">Overview</button>
       <button class="tab-btn" data-tab="data">Data</button>
+      <button class="tab-btn" data-tab="chaos">Chaos</button>
     </div>
 
     <!-- TAB: OVERVIEW -->
@@ -1004,6 +1086,91 @@
     </div>
 
     </div><!-- end tab-data -->
+
+    <!-- TAB: CHAOS -->
+    <div class="tab-panel" id="tab-chaos">
+
+      <!-- CHAOS STATUS BAR -->
+      <div class="chaos-status-bar" id="chaos-status-bar">
+        <span class="chaos-status-dot idle" id="chaos-status-dot"></span>
+        <span id="chaos-status-text">No experiments running — system nominal</span>
+        <span style="margin-left:auto;font-size:12px;color:var(--muted)" id="chaos-active-list"></span>
+      </div>
+
+      <!-- EXPERIMENT CARDS -->
+      <div class="chaos-grid">
+
+        <div class="chaos-card" id="chaos-card-latency">
+          <div class="chaos-icon ci-latency">🐌</div>
+          <div class="chaos-title">Inject Latency</div>
+          <div class="chaos-desc">Add 2s delay to every request. Tests timeout alerting and dashboard response time charts.</div>
+          <button class="chaos-btn chaos-btn-warn" id="chaos-btn-latency" onclick="chaosToggle('latency',{delay_ms:2000})">Activate</button>
+        </div>
+
+        <div class="chaos-card" id="chaos-card-error-rate">
+          <div class="chaos-icon ci-error">💥</div>
+          <div class="chaos-title">Error Storm</div>
+          <div class="chaos-desc">50% of requests return 500. Triggers error rate alerts, SLO burn rate, and error classification.</div>
+          <button class="chaos-btn chaos-btn-danger" id="chaos-btn-error_rate" onclick="chaosToggle('error_rate',{rate:0.5})">Activate</button>
+        </div>
+
+        <div class="chaos-card" id="chaos-card-db-kill">
+          <div class="chaos-icon ci-db">🗄️</div>
+          <div class="chaos-title">Kill Database</div>
+          <div class="chaos-desc">Close all DB connections. Health check degrades, queries fail. Tests database resilience monitoring.</div>
+          <button class="chaos-btn chaos-btn-danger" id="chaos-btn-db_kill" onclick="chaosToggle('db_kill',{})">Activate</button>
+        </div>
+
+        <div class="chaos-card" id="chaos-card-cpu-stress">
+          <div class="chaos-icon ci-cpu">🔥</div>
+          <div class="chaos-title">CPU Stress</div>
+          <div class="chaos-desc">Spike process CPU for 30s. Watch the CPU ring and historical chart react in real time.</div>
+          <button class="chaos-btn chaos-btn-warn" id="chaos-btn-cpu_stress" onclick="chaosToggle('cpu_stress',{duration_s:30})">30s Burn</button>
+        </div>
+
+        <div class="chaos-card" id="chaos-card-crash">
+          <div class="chaos-icon ci-crash">☠️</div>
+          <div class="chaos-title">Kill Process</div>
+          <div class="chaos-desc">Terminate the Flask process. Self-healing will detect the crash and auto-restart the service.</div>
+          <button class="chaos-btn chaos-btn-danger" onclick="if(confirm('Kill the Flask process? Self-healing will attempt restart.'))chaosAction('crash',{})">Kill Flask</button>
+        </div>
+
+        <div class="chaos-card">
+          <div class="chaos-icon ci-clear">✅</div>
+          <div class="chaos-title">Clear All</div>
+          <div class="chaos-desc">Immediately disable all active chaos experiments and restore normal operation.</div>
+          <button class="chaos-btn chaos-btn-safe" onclick="chaosAction('clear',{})">Clear All</button>
+        </div>
+
+      </div>
+
+      <!-- TRAFFIC GENERATOR -->
+      <div class="chaos-status-bar" style="justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="font-size:20px">📡</span>
+          <div>
+            <div style="font-weight:600;font-size:14px;color:#f1f5f9">Traffic Generator</div>
+            <div style="font-size:12px;color:var(--muted)">Generate synthetic requests to user-facing routes so chaos effects appear in logs and trigger alerts</div>
+          </div>
+        </div>
+        <button class="chaos-btn chaos-btn-warn" onclick="chaosAction('traffic',{duration_s:60,rps:5})">Generate 60s @ 5 req/s</button>
+      </div>
+
+      <!-- REMEDIATION LOG -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <span class="section-title">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            Self-Healing Remediation Log
+          </span>
+          <span class="section-badge" id="remed-badge">0 events</span>
+        </div>
+        <div id="remed-list" style="max-height:260px;overflow-y:auto;">
+          <div class="empty-state">No remediation actions yet.</div>
+        </div>
+      </div>
+
+    </div><!-- end tab-chaos -->
 
   </main>
 
@@ -1551,11 +1718,139 @@
     pollErrorClassification();
     initFromHistory();
     setInterval(fastPoll,                5000);
-    setInterval(pollAppData,            15000);
-    setInterval(pollSLO,                30000);
-    setInterval(pollIncidents,          30000);
+    setInterval(pollAppData,             5000);
+    setInterval(pollSLO,                 5000);
+    setInterval(pollIncidents,           5000);
     setInterval(pollFailures,            5000);
-    setInterval(pollErrorClassification, 30000);
+    setInterval(pollErrorClassification, 5000);
+
+    // ── Chaos Engineering ────────────────────────────────────────────────────
+
+    // Map experiment keys to their API action names and activate params
+    const chaosConfig = {
+      latency:    { action: "latency",    params: {delay_ms: 2000}, label: "Activate",  btnCls: "chaos-btn-warn" },
+      error_rate: { action: "error-rate", params: {rate: 0.5},      label: "Activate",  btnCls: "chaos-btn-danger" },
+      db_kill:    { action: "db-kill",    params: {},                label: "Activate",  btnCls: "chaos-btn-danger" },
+      cpu_stress: { action: "cpu-stress", params: {duration_s: 30}, label: "30s Burn",  btnCls: "chaos-btn-warn" },
+    };
+
+    async function chaosToggle(key, params) {
+      const btn = document.getElementById(`chaos-btn-${key}`);
+      const isActive = btn && btn.dataset.active === "true";
+      if (isActive) {
+        await chaosAction("clear", {experiment: key});
+      } else {
+        const cfg = chaosConfig[key];
+        await chaosAction(cfg.action, params || cfg.params);
+      }
+    }
+
+    async function chaosAction(action, data) {
+      try {
+        const r = await fetch(`/chaos/${action}`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(data),
+        });
+        const result = await r.json();
+        console.log("Chaos:", action, result);
+        setTimeout(pollChaosStatus, 500);
+      } catch (e) {
+        console.warn("Chaos action failed:", e);
+      }
+    }
+
+    async function pollChaosStatus() {
+      const data = await safeFetch("/chaos/status");
+      const bar  = document.getElementById("chaos-status-bar");
+      const dot  = document.getElementById("chaos-status-dot");
+      const text = document.getElementById("chaos-status-text");
+      const list = document.getElementById("chaos-active-list");
+
+      if (!data || data.unreachable) {
+        bar.className  = "chaos-status-bar chaos-hot";
+        dot.className  = "chaos-status-dot running";
+        text.textContent = "Service unreachable — self-healing may be in progress";
+        text.style.color = "var(--red)";
+        document.querySelectorAll(".chaos-card").forEach(c => c.classList.remove("chaos-active"));
+        return;
+      }
+
+      const exps   = data.experiments || {};
+      const active = Object.entries(exps).filter(([_, v]) => v.active).map(([k]) => k);
+
+      if (active.length > 0) {
+        bar.className  = "chaos-status-bar chaos-hot";
+        dot.className  = "chaos-status-dot running";
+        text.textContent = `${active.length} experiment${active.length > 1 ? "s" : ""} running`;
+        text.style.color = "var(--red)";
+        list.textContent = active.join(", ");
+      } else {
+        bar.className  = "chaos-status-bar";
+        dot.className  = "chaos-status-dot idle";
+        text.textContent = "No experiments running — system nominal";
+        text.style.color = "var(--green)";
+        list.textContent = "";
+      }
+
+      // Update card highlights and toggle buttons
+      const cardMap = {
+        latency:    "chaos-card-latency",
+        error_rate: "chaos-card-error-rate",
+        db_kill:    "chaos-card-db-kill",
+        cpu_stress: "chaos-card-cpu-stress",
+      };
+      Object.entries(cardMap).forEach(([key, cardId]) => {
+        const card = document.getElementById(cardId);
+        const btn  = document.getElementById(`chaos-btn-${key}`);
+        const isActive = exps[key]?.active;
+
+        if (card) {
+          isActive ? card.classList.add("chaos-active") : card.classList.remove("chaos-active");
+        }
+        if (btn) {
+          btn.dataset.active = isActive ? "true" : "false";
+          if (isActive) {
+            btn.textContent = "Deactivate";
+            btn.className   = "chaos-btn chaos-btn-safe";
+          } else {
+            const cfg = chaosConfig[key];
+            btn.textContent = cfg.label;
+            btn.className   = "chaos-btn " + cfg.btnCls;
+          }
+        }
+      });
+    }
+
+    async function pollRemediation() {
+      const data = await safeFetch("/dashboard/remediation-log");
+      const list  = document.getElementById("remed-list");
+      const badge = document.getElementById("remed-badge");
+      if (!data || !data.length) {
+        badge.textContent = "0 events";
+        list.innerHTML = '<div class="empty-state">No remediation actions yet.</div>';
+        return;
+      }
+
+      badge.textContent = `${data.length} event${data.length > 1 ? "s" : ""}`;
+      list.innerHTML = [...data].reverse().map(e => {
+        const ts   = e.timestamp ? new Date(e.timestamp).toLocaleTimeString("en-US", { hour12: false }) : "—";
+        const act  = e.action || "unknown";
+        const cls  = act.includes("restored") ? "remed-restored" : act.includes("fail") || act.includes("abort") ? "remed-failed" : "remed-restart";
+        const ok   = e.success ? '<span style="color:var(--green)">OK</span>' : '<span style="color:var(--red)">FAIL</span>';
+        return `<div class="remed-row">
+          <span class="remed-time">${ts}</span>
+          <span class="remed-action ${cls}">${act}</span>
+          <span class="remed-detail" title="${e.detail || ""}">${e.detail || "—"}</span>
+          <span class="remed-status">${ok}</span>
+        </div>`;
+      }).join("");
+    }
+
+    pollChaosStatus();
+    pollRemediation();
+    setInterval(pollChaosStatus,  5000);
+    setInterval(pollRemediation,  5000);
 
     // ── Tab switching ─────────────────────────────────────────────────────────
     document.querySelectorAll(".tab-btn").forEach(btn => {

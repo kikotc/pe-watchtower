@@ -7,8 +7,11 @@ import json
 import logging
 import os
 import pathlib
+import subprocess
+import sys
 import threading
 import time
+from collections import deque
 from datetime import datetime, timezone
 from functools import wraps
 from typing import Optional
@@ -50,6 +53,17 @@ logger = logging.getLogger("monitor")
 _last_alert: dict[str, float] = {}
 _down_since: Optional[float]  = None
 _INCIDENTS_URL = f"{BASE_URL}/incidents/record"
+
+# ── Self-healing state ───────────────────────────────────────────────────────
+
+_PROJECT_DIR     = str(pathlib.Path(__file__).parent)
+_HEAL_COOLDOWN   = 30          # seconds between restart attempts
+_MAX_HEAL_TRIES  = 5           # max consecutive restart attempts
+_heal_last       = 0.0
+_heal_tries      = 0
+_heal_consecutive_down = 0     # checks since last healthy
+_flask_proc: Optional[subprocess.Popen] = None
+_remediation_log: deque = deque(maxlen=50)  # ring buffer of events
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -271,6 +285,101 @@ def check_burn_rate() -> None:
         logger.error("Alert fired: burn_rate — %.1fx", burn_rate)
 
 
+# ── Self-healing ─────────────────────────────────────────────────────────────
+
+def _log_remediation(action: str, detail: str, success: bool) -> None:
+    entry = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "action": action,
+        "detail": detail,
+        "success": success,
+    }
+    _remediation_log.append(entry)
+    logger.info("Remediation: %s — %s (success=%s)", action, detail, success)
+
+
+def attempt_self_heal() -> None:
+    """Try to restart the Flask app if it's been down for 2+ consecutive checks."""
+    global _heal_last, _heal_tries, _heal_consecutive_down, _flask_proc
+
+    # Check if service is reachable
+    try:
+        resp = requests.get(f"{BASE_URL}/health", timeout=5)
+        is_up = resp.status_code == 200
+    except Exception:
+        is_up = False
+
+    if is_up:
+        if _heal_consecutive_down > 0:
+            _log_remediation("health_restored", "Service came back online", True)
+        _heal_consecutive_down = 0
+        _heal_tries = 0
+        return
+
+    _heal_consecutive_down += 1
+
+    # Wait for 2 consecutive failures before attempting restart
+    if _heal_consecutive_down < 2:
+        return
+
+    # Respect cooldown and max retries
+    now = time.time()
+    if now - _heal_last < _HEAL_COOLDOWN:
+        return
+    if _heal_tries >= _MAX_HEAL_TRIES:
+        if _heal_tries == _MAX_HEAL_TRIES:
+            _log_remediation("restart_aborted",
+                             f"Max attempts ({_MAX_HEAL_TRIES}) reached — manual intervention required",
+                             False)
+            send_discord({
+                "title": "🛑  Self-Healing Exhausted",
+                "description": f"Tried to restart the service **{_MAX_HEAL_TRIES} times** without success. Manual intervention required.",
+                "color": 0x8B0000,
+                "footer": {"text": "Watchtower Self-Healing"},
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            })
+            _heal_tries += 1  # prevent repeated alerts
+        return
+
+    _heal_last = now
+    _heal_tries += 1
+
+    _log_remediation("restart_attempt",
+                     f"Attempt {_heal_tries}/{_MAX_HEAL_TRIES} — starting Flask process",
+                     True)
+
+    send_discord({
+        "title": "🔧  Auto-Remediation: Restarting Service",
+        "description": f"Service has been down for {_heal_consecutive_down} checks. Attempting automatic restart (attempt {_heal_tries}/{_MAX_HEAL_TRIES}).",
+        "color": 0x3498DB,
+        "footer": {"text": "Watchtower Self-Healing"},
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    })
+
+    try:
+        # Kill any existing managed process
+        if _flask_proc and _flask_proc.poll() is None:
+            _flask_proc.terminate()
+            _flask_proc.wait(timeout=5)
+    except Exception:
+        pass
+
+    try:
+        _heal_log_path = os.path.join(_PROJECT_DIR, "logs", "self-heal.log")
+        _heal_log_fd = open(_heal_log_path, "a")
+        _flask_proc = subprocess.Popen(
+            [sys.executable, "run.py"],
+            cwd=_PROJECT_DIR,
+            stdout=_heal_log_fd,
+            stderr=_heal_log_fd,
+        )
+        _log_remediation("restart_launched",
+                         f"PID {_flask_proc.pid} — output → logs/self-heal.log",
+                         True)
+    except Exception as exc:
+        _log_remediation("restart_failed", str(exc), False)
+
+
 def _monitor_loop() -> None:
     time.sleep(STARTUP_DELAY)
     logger.info("Alerting monitor started — watching %s every %ss", BASE_URL, CHECK_INTERVAL)
@@ -279,6 +388,7 @@ def _monitor_loop() -> None:
             check_service_down()
             check_error_rate()
             check_burn_rate()
+            attempt_self_heal()
         except Exception:
             logger.exception("Unexpected error in monitor loop")
         time.sleep(CHECK_INTERVAL)
@@ -489,6 +599,40 @@ def dashboard_incidents():
     entries = _read_log_file()
     fired   = [e for e in entries if "Alert fired" in e.get("message", "")]
     return jsonify(fired[-20:])
+
+
+# ── Chaos proxy routes ──────────────────────────────────────────────────────
+
+@ui.route("/chaos/status")
+@_login_required
+def chaos_status_proxy():
+    try:
+        r = requests.get(f"{BASE_URL}/chaos/status", timeout=5)
+        return jsonify(r.json()), r.status_code
+    except Exception:
+        return jsonify({"experiments": {}, "any_active": False, "unreachable": True}), 200
+
+
+@ui.route("/chaos/<action>", methods=["POST"])
+@_login_required
+def chaos_action_proxy(action):
+    allowed = {"latency", "error-rate", "db-kill", "cpu-stress", "crash", "clear"}
+    if action not in allowed:
+        return jsonify({"error": "unknown action"}), 400
+    try:
+        data = request.get_json(silent=True) or {}
+        r = requests.post(f"{BASE_URL}/chaos/{action}", json=data, timeout=5)
+        return jsonify(r.json()), r.status_code
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 503
+
+
+# ── Remediation log endpoint ────────────────────────────────────────────────
+
+@ui.route("/dashboard/remediation-log")
+@_login_required
+def remediation_log():
+    return jsonify(list(_remediation_log))
 
 
 def _start_ui_server() -> None:

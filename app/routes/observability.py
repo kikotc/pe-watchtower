@@ -208,10 +208,10 @@ def error_classification():
                 endpoints[path] = endpoints.get(path, 0) + 1
                 matched = True
                 break
-        if not matched and exc:
-            counts["unclassified"] = counts.get("unclassified", 0) + 1
+        if not matched:
+            label = "chaos_injected" if not exc else "unclassified"
+            counts[label] = counts.get(label, 0) + 1
             endpoints[path] = endpoints.get(path, 0) + 1
-            unclassified += 1
 
     total_errors = sum(counts.values())
     top_endpoints = sorted(endpoints.items(), key=lambda x: x[1], reverse=True)[:5]

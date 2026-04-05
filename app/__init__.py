@@ -30,7 +30,8 @@ def create_app():
 
     @app.after_request
     def _log_request(response):
-        duration_ms = round((time.monotonic() - g.start_time) * 1000, 2)
+        start = getattr(g, "start_time", None)
+        duration_ms = round((time.monotonic() - start) * 1000, 2) if start else 0
         level = (
             "ERROR" if response.status_code >= 500
             else "WARNING" if response.status_code >= 400
@@ -40,14 +41,14 @@ def create_app():
             getattr(logging, level),
             "request",
             extra={
-                "request_id": g.request_id,
+                "request_id": getattr(g, "request_id", "unknown"),
                 "method": request.method,
                 "path": request.path,
                 "status": response.status_code,
                 "duration_ms": duration_ms,
             },
         )
-        response.headers["X-Request-ID"] = g.request_id
+        response.headers["X-Request-ID"] = getattr(g, "request_id", "unknown")
         return response
 
     @app.route("/health")
