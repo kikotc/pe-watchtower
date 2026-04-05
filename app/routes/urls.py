@@ -5,6 +5,7 @@ import os
 import string
 import random
 from datetime import datetime, timezone
+from urllib.parse import urlparse
 
 from flask import Blueprint, jsonify, request, redirect
 from peewee import IntegrityError
@@ -57,8 +58,9 @@ def list_or_create_urls():
         if not isinstance(original_url, str):
             return jsonify({"error": "url must be a string"}), 400
 
-        if not original_url.startswith(("http://", "https://")):
-            return jsonify({"error": "url must be a valid URL starting with http:// or https://"}), 422
+        _parsed = urlparse(original_url)
+        if _parsed.scheme not in ("http", "https") or not _parsed.netloc:
+            return jsonify({"error": "url must be a valid URL with http or https scheme and a domain"}), 422
 
         if user_id is not None:
             if not isinstance(user_id, int):
@@ -201,6 +203,9 @@ def update_url(url_id):
     if "original_url" in data:
         if not isinstance(data["original_url"], str):
             return jsonify({"error": "original_url must be a string"}), 400
+        _parsed = urlparse(data["original_url"])
+        if _parsed.scheme not in ("http", "https") or not _parsed.netloc:
+            return jsonify({"error": "url must be a valid URL with http or https scheme and a domain"}), 422
         url.original_url = data["original_url"]
     if "title" in data:
         url.title = data["title"]
