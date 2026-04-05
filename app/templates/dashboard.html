@@ -310,6 +310,7 @@
     <div class="header-right">
       <span id="last-updated">Loading…</span>
       <a href="/dashboard/runbook" class="btn-runbook">📖 Runbook</a>
+      <a href="/" class="btn-runbook">🟢 Status Page</a>
       <a href="/dashboard/logout" class="btn-logout">Sign out</a>
     </div>
   </header>
@@ -1035,7 +1036,7 @@
       badge.style.color = met ? "var(--green)" : "var(--red)";
 
       const budgetEl = document.getElementById("slo-budget");
-      budgetEl.textContent = budget.toFixed(1) + "%";
+      budgetEl.textContent = budget >= 100 ? "Exhausted" : budget.toFixed(1) + "%";
       budgetEl.className = "slo-stat-val " +
         (budget < 50 ? "slo-budget-ok" : budget < 90 ? "slo-budget-warn" : "slo-budget-crit");
 

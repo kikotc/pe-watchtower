@@ -1,68 +1,95 @@
 """
-Standalone alerting monitor — run this in a separate terminal alongside the Flask app.
-It watches /health and /logs and fires Discord alerts independently of the app process.
+Standalone monitor — run alongside the Flask app in a separate terminal.
+Serves the status page + internal dashboard on port 5002.
+Watches /health and error rate, fires Discord alerts independently.
 """
+import json
 import logging
 import os
+import pathlib
+import threading
 import time
 from datetime import datetime, timezone
+from functools import wraps
 from typing import Optional
 
 import requests
 from dotenv import load_dotenv
+from flask import (
+    Flask, jsonify, make_response, redirect,
+    render_template, request, url_for,
+)
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
 load_dotenv()
 
-CHECK_INTERVAL = 15
-STARTUP_DELAY = 3
-ALERT_COOLDOWN = 300
+# ── Config ────────────────────────────────────────────────────────────────────
+
+CHECK_INTERVAL     = 15
+STARTUP_DELAY      = 3
+ALERT_COOLDOWN     = 300
 ERROR_RATE_THRESHOLD = 0.5
-ERROR_RATE_WINDOW = 120
-BASE_URL = "http://localhost:5001"
+ERROR_RATE_WINDOW  = 120
+BASE_URL           = "http://localhost:5001"
+UI_PORT            = 5002
 
-_last_alert: dict[str, float] = {}
-_down_since: Optional[float] = None  # timestamp when service went down
-_INCIDENTS_URL = f"http://localhost:5001/incidents/record"
+_SECRET   = os.environ.get("DASHBOARD_SECRET", "dashboard-dev-secret-change-me")
+_PASSWORD = os.environ.get("DASHBOARD_PASSWORD", "admin")
+_COOKIE   = "dashboard_token"
 
+_TEMPLATE_DIR = str(pathlib.Path(__file__).parent / "app" / "templates")
+_LOG_FILE     = str(pathlib.Path(__file__).parent / "logs" / "app.log")
 
-def _record_incident(incident_type: str, started_at: str, resolved_at: Optional[str] = None,
-                     duration_seconds: Optional[float] = None, details: str = "") -> None:
-    try:
-        requests.post(_INCIDENTS_URL, json={
-            "type": incident_type,
-            "started_at": started_at,
-            "resolved_at": resolved_at,
-            "duration_seconds": duration_seconds,
-            "details": details,
-        }, timeout=5)
-    except Exception as exc:
-        logger.warning("Could not record incident to DB: %s", exc)
+# ── Logging ───────────────────────────────────────────────────────────────────
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("monitor")
 
+# ── Alert state ───────────────────────────────────────────────────────────────
+
+_last_alert: dict[str, float] = {}
+_down_since: Optional[float]  = None
+_INCIDENTS_URL = f"{BASE_URL}/incidents/record"
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def iso_to_epoch(iso: str) -> float:
+    try:
+        return datetime.fromisoformat(iso).timestamp()
+    except Exception:
+        return 0.0
+
+
+def _read_log_file() -> list:
+    entries = []
+    try:
+        with open(_LOG_FILE) as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        entries.append(json.loads(line))
+                    except json.JSONDecodeError:
+                        pass
+    except FileNotFoundError:
+        pass
+    return entries
+
+
+# ── Discord ───────────────────────────────────────────────────────────────────
 
 def send_discord(embed: dict) -> None:
     webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
     if not webhook_url:
-        logger.warning("DISCORD_WEBHOOK_URL not set")
         return
-
     role_id = os.environ.get("DISCORD_ALERT_ROLE_ID")
     content = f"<@&{role_id}>" if role_id else ""
     allowed_mentions = {"roles": [role_id]} if role_id else {"parse": []}
-
-    payload = {
-        "content": content,
-        "allowed_mentions": allowed_mentions,
-        "embeds": [embed],
-    }
-
     try:
-        resp = requests.post(webhook_url, json=payload, timeout=5)
+        resp = requests.post(webhook_url,
+                             json={"content": content, "allowed_mentions": allowed_mentions, "embeds": [embed]},
+                             timeout=5)
         if resp.status_code not in (200, 204):
             logger.warning("Discord webhook returned %s", resp.status_code)
         else:
@@ -71,12 +98,28 @@ def send_discord(embed: dict) -> None:
         logger.error("Failed to send Discord alert: %s", exc)
 
 
-def should_alert(key: str) -> bool:
+# ── Alerting ──────────────────────────────────────────────────────────────────
+
+def _should_alert(key: str) -> bool:
     last = _last_alert.get(key, 0)
     if time.time() - last >= ALERT_COOLDOWN:
         _last_alert[key] = time.time()
         return True
     return False
+
+
+def _record_incident(incident_type: str, started_at: str,
+                     resolved_at: Optional[str] = None,
+                     duration_seconds: Optional[float] = None) -> None:
+    try:
+        requests.post(_INCIDENTS_URL, json={
+            "type": incident_type,
+            "started_at": started_at,
+            "resolved_at": resolved_at,
+            "duration_seconds": duration_seconds,
+        }, timeout=5)
+    except Exception as exc:
+        logger.warning("Could not record incident: %s", exc)
 
 
 def check_service_down() -> None:
@@ -93,22 +136,21 @@ def check_service_down() -> None:
 
     if is_up:
         if _down_since is not None:
-            # Service just recovered — send recovery alert
             duration = int(time.time() - _down_since)
             mins, secs = divmod(duration, 60)
             duration_str = f"{mins}m {secs}s" if mins else f"{secs}s"
-            down_ts = datetime.fromtimestamp(_down_since, tz=timezone.utc).isoformat()
+            down_ts      = datetime.fromtimestamp(_down_since, tz=timezone.utc).isoformat()
             recovered_ts = datetime.now(timezone.utc).isoformat()
             _record_incident("service_down", down_ts, recovered_ts, float(duration))
             send_discord({
                 "title": "✅  Service Recovered",
                 "description": "The service is back online.",
-                "color": 0x2ECC71,  # green
+                "color": 0x2ECC71,
                 "fields": [
-                    {"name": "Endpoint", "value": f"`{health_url}`", "inline": True},
-                    {"name": "Was down for", "value": f"`{duration_str}`", "inline": True},
+                    {"name": "Endpoint",      "value": f"`{health_url}`",  "inline": True},
+                    {"name": "Was down for",  "value": f"`{duration_str}`", "inline": True},
                 ],
-                "footer": {"text": "Watchtower Alerting"},
+                "footer":    {"text": "Watchtower Alerting"},
                 "timestamp": recovered_ts,
             })
             logger.info("Alert fired: service_recovered — was down %ss", duration)
@@ -119,60 +161,56 @@ def check_service_down() -> None:
     if _down_since is None:
         _down_since = time.time()
 
-    if should_alert("service_down"):
+    if _should_alert("service_down"):
         send_discord({
             "title": "🔴  Service Down",
             "description": "The health check has failed. Immediate attention required.",
-            "color": 0xE74C3C,  # red
+            "color": 0xE74C3C,
             "fields": [
-                {"name": "Endpoint", "value": f"`{health_url}`", "inline": True},
-                {"name": "Reason", "value": f"`{status}`", "inline": True},
+                {"name": "Endpoint",      "value": f"`{health_url}`", "inline": True},
+                {"name": "Reason",        "value": f"`{status}`",     "inline": True},
                 {"name": "Next check in", "value": f"`{CHECK_INTERVAL}s`", "inline": True},
             ],
-            "footer": {"text": "Watchtower Alerting"},
+            "footer":    {"text": "Watchtower Alerting"},
             "timestamp": datetime.now(timezone.utc).isoformat(),
         })
         logger.error("Alert fired: service_down — %s", status)
 
 
 def check_error_rate() -> None:
-    logs_url = f"{BASE_URL}/logs"
     try:
-        resp = requests.get(logs_url, timeout=5)
+        resp = requests.get(f"{BASE_URL}/logs", timeout=5)
         if resp.status_code != 200:
             return
         buf = resp.json()
     except Exception:
         return
 
-    now = time.time()
+    now    = time.time()
     cutoff = now - ERROR_RATE_WINDOW
-
-    recent = [
-        e for e in buf
-        if e.get("message") == "request"
-        and isinstance(e.get("timestamp"), str)
-        and iso_to_epoch(e["timestamp"]) >= cutoff
-    ]
+    recent = [e for e in buf
+              if e.get("message") == "request"
+              and isinstance(e.get("timestamp"), str)
+              and iso_to_epoch(e["timestamp"]) >= cutoff]
 
     if len(recent) < 5:
         return
 
     errors = [e for e in recent if e.get("status", 0) >= 500]
-    rate = len(errors) / len(recent)
+    rate   = len(errors) / len(recent)
 
     if rate >= ERROR_RATE_THRESHOLD:
-        if should_alert("high_error_rate"):
+        if _should_alert("high_error_rate"):
             send_discord({
                 "title": "⚠️  High Error Rate Detected",
                 "description": f"More than {ERROR_RATE_THRESHOLD:.0%} of recent requests returned a 5xx error.",
-                "color": 0xE67E22,  # orange
+                "color": 0xE67E22,
                 "fields": [
-                    {"name": "Error Rate", "value": f"`{rate:.0%}`", "inline": True},
-                    {"name": "Failed Requests", "value": f"`{len(errors)} / {len(recent)}`", "inline": True},
-                    {"name": "Window", "value": f"`{ERROR_RATE_WINDOW}s`", "inline": True},
+                    {"name": "Error Rate",       "value": f"`{rate:.0%}`",                  "inline": True},
+                    {"name": "Failed Requests",  "value": f"`{len(errors)} / {len(recent)}`", "inline": True},
+                    {"name": "Window",           "value": f"`{ERROR_RATE_WINDOW}s`",         "inline": True},
                 ],
-                "footer": {"text": "Watchtower Alerting"},
+                "footer":    {"text": "Watchtower Alerting"},
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             })
             logger.error("Alert fired: high_error_rate — %.0f%%", rate * 100)
@@ -180,20 +218,179 @@ def check_error_rate() -> None:
         _last_alert.pop("high_error_rate", None)
 
 
-def iso_to_epoch(iso: str) -> float:
-    try:
-        return datetime.fromisoformat(iso).timestamp()
-    except Exception:
-        return 0.0
+# ── Monitor loop ──────────────────────────────────────────────────────────────
 
+def _monitor_loop() -> None:
+    time.sleep(STARTUP_DELAY)
+    logger.info("Alerting monitor started — watching %s every %ss", BASE_URL, CHECK_INTERVAL)
+    while True:
+        try:
+            check_service_down()
+            check_error_rate()
+        except Exception:
+            logger.exception("Unexpected error in monitor loop")
+        time.sleep(CHECK_INTERVAL)
+
+
+# ── UI Flask app ──────────────────────────────────────────────────────────────
+
+ui = Flask("monitor_ui", template_folder=_TEMPLATE_DIR)
+ui.secret_key = _SECRET
+
+_serializer = URLSafeTimedSerializer(_SECRET)
+
+
+def _login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.cookies.get(_COOKIE)
+        try:
+            _serializer.loads(token, max_age=86400)
+        except (BadSignature, SignatureExpired, TypeError, Exception):
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated
+
+
+@ui.route("/", methods=["GET"])
+def status():
+    return render_template("status.html")
+
+
+@ui.route("/dashboard/login", methods=["GET", "POST"])
+def login():
+    error = None
+    if request.method == "POST":
+        if request.form.get("password", "") == _PASSWORD:
+            token = _serializer.dumps("authenticated")
+            resp  = make_response(redirect(url_for("dashboard")))
+            resp.set_cookie(_COOKIE, token, httponly=True, samesite="Lax", max_age=86400)
+            return resp
+        error = "Incorrect password."
+    return render_template("login.html", error=error)
+
+
+@ui.route("/dashboard/logout")
+def logout():
+    resp = make_response(redirect(url_for("login")))
+    resp.delete_cookie(_COOKIE)
+    return resp
+
+
+@ui.route("/dashboard")
+@_login_required
+def dashboard():
+    return render_template("dashboard.html")
+
+
+@ui.route("/dashboard/runbook")
+@_login_required
+def runbook():
+    return render_template("runbook.html")
+
+
+# ── Data routes (proxy to main app or read log directly) ─────────────────────
+
+@ui.route("/health")
+def health_proxy():
+    try:
+        r = requests.get(f"{BASE_URL}/health", timeout=5)
+        return jsonify(r.json()), r.status_code
+    except Exception:
+        return jsonify({"status": "unreachable"}), 503
+
+
+@ui.route("/metrics")
+def metrics_proxy():
+    try:
+        r = requests.get(f"{BASE_URL}/metrics", timeout=5)
+        return jsonify(r.json()), r.status_code
+    except Exception:
+        return jsonify({"error": "unreachable"}), 503
+
+
+@ui.route("/logs")
+def logs_proxy():
+    try:
+        r = requests.get(f"{BASE_URL}/logs", timeout=5)
+        return jsonify(r.json()), r.status_code
+    except Exception:
+        return jsonify([]), 200
+
+
+@ui.route("/slo")
+def slo_proxy():
+    try:
+        r = requests.get(f"{BASE_URL}/slo", timeout=5)
+        return jsonify(r.json()), r.status_code
+    except Exception:
+        return jsonify({"uptime_percent": 100, "total_requests": 0}), 200
+
+
+@ui.route("/incidents")
+def incidents_proxy():
+    try:
+        r = requests.get(f"{BASE_URL}/incidents", timeout=5)
+        return jsonify(r.json()), r.status_code
+    except Exception:
+        return jsonify([]), 200
+
+
+@ui.route("/uptime-history")
+def uptime_history_proxy():
+    try:
+        r = requests.get(f"{BASE_URL}/uptime-history", timeout=5)
+        return jsonify(r.json()), r.status_code
+    except Exception:
+        return jsonify([]), 200
+
+
+@ui.route("/dashboard/history")
+@_login_required
+def history():
+    entries = _read_log_file()
+    return jsonify(entries[-10_000:])
+
+
+@ui.route("/dashboard/slo")
+@_login_required
+def dashboard_slo():
+    entries = _read_log_file()
+    reqs    = [e for e in entries if e.get("method") and e.get("status")]
+    total   = len(reqs)
+    errors  = sum(1 for r in reqs if r.get("status", 0) >= 500)
+    uptime  = round((total - errors) / total * 100, 3) if total else 100.0
+    target  = 99.9
+    budget_total    = round(100 - target, 3)
+    budget_consumed = round((100 - uptime) / budget_total * 100, 1) if budget_total else 0
+    return jsonify({
+        "uptime_pct":      uptime,
+        "slo_target":      target,
+        "slo_met":         uptime >= target,
+        "total_requests":  total,
+        "error_requests":  errors,
+        "budget_consumed": min(budget_consumed, 999),
+    })
+
+
+@ui.route("/dashboard/incidents")
+@_login_required
+def dashboard_incidents():
+    entries = _read_log_file()
+    fired   = [e for e in entries if "Alert fired" in e.get("message", "")]
+    return jsonify(fired[-20:])
+
+
+def _start_ui_server() -> None:
+    logger.info("UI server running at http://localhost:%s", UI_PORT)
+    ui.run(host="0.0.0.0", port=UI_PORT, debug=False, use_reloader=False)
+
+
+# ── Entry point ───────────────────────────────────────────────────────────────
 
 def main() -> None:
-    logger.info("Monitor starting — watching %s every %ss", BASE_URL, CHECK_INTERVAL)
-    time.sleep(STARTUP_DELAY)
-    while True:
-        check_service_down()
-        check_error_rate()
-        time.sleep(CHECK_INTERVAL)
+    threading.Thread(target=_start_ui_server, daemon=True, name="ui-server").start()
+    threading.Thread(target=_monitor_loop,    daemon=False, name="monitor-loop").start()
 
 
 if __name__ == "__main__":
