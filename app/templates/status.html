@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Watchtower — Status</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #080d18;
+      --surface:  #0f1629;
+      --surface2: #131d35;
+      --border:   #1e2d4a;
+      --blue:     #3b82f6;
+      --green:    #10b981;
+      --yellow:   #f59e0b;
+      --red:      #ef4444;
+      --text:     #e2e8f0;
+      --muted:    #64748b;
+      --faint:    #94a3b8;
+    }
+
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 32px; height: 62px;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .logo-icon   { font-size: 22px; }
+    .logo-title  { font-size: 17px; font-weight: 700; color: #f1f5f9; }
+    .logo-badge  {
+      font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
+      color: var(--blue); background: rgba(59,130,246,0.12);
+      border: 1px solid rgba(59,130,246,0.25); border-radius: 4px; padding: 3px 8px;
+    }
+    .header-meta { font-size: 13px; color: var(--muted); }
+
+    /* ── LAYOUT ── */
+    main { max-width: 800px; margin: 0 auto; padding: 40px 24px 64px; display: flex; flex-direction: column; gap: 32px; }
+
+    /* ── HERO ── */
+    .hero {
+      display: flex; align-items: center; gap: 16px;
+      padding: 26px 28px; border-radius: 14px;
+      border: 1px solid var(--border); background: var(--surface);
+      transition: background 0.4s, border-color 0.4s;
+    }
+    .hero.up   { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.07); }
+    .hero.down { border-color: rgba(239,68,68,0.4);  background: rgba(239,68,68,0.07); }
+    .hero-icon { font-size: 32px; line-height: 1; }
+    .hero-text h1 { font-size: 20px; font-weight: 700; }
+    .hero-text p  { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .hero.up   .hero-text h1 { color: var(--green); }
+    .hero.down .hero-text h1 { color: var(--red); }
+    .hero-slo { margin-left: auto; text-align: right; }
+    .hero-slo .pct   { font-size: 26px; font-weight: 700; }
+    .hero-slo .label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* ── SECTION LABEL ── */
+    .section-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
+      color: var(--muted); padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    }
+
+    /* ── COMPONENT ROWS ── */
+    .components { display: flex; flex-direction: column; gap: 2px; }
+
+    .component {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px 20px;
+    }
+
+    .component-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .component-name { font-size: 14px; font-weight: 600; }
+    .component-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .badge {
+      font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 20px;
+      white-space: nowrap;
+    }
+    .badge.operational { background: rgba(16,185,129,0.15); color: var(--green); }
+    .badge.degraded    { background: rgba(239,68,68,0.15);  color: var(--red); }
+    .badge.unknown     { background: rgba(100,116,139,0.15); color: var(--muted); }
+
+    /* ── UPTIME BARS ── */
+    .uptime-bars {
+      display: flex; align-items: flex-end; gap: 2px; height: 28px;
+    }
+    .bar {
+      flex: 1; border-radius: 2px; min-width: 0; height: 100%;
+      cursor: pointer; transition: opacity 0.15s;
+      position: relative;
+    }
+    .bar:hover { opacity: 0.75; }
+    .bar.green  { background: var(--green); }
+    .bar.yellow { background: var(--yellow); }
+    .bar.red    { background: var(--red); }
+    .bar.empty  { background: var(--border); opacity: 0.5; }
+
+    /* Tooltip */
+    .bar[data-tip]:hover::after {
+      content: attr(data-tip);
+      position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+      background: #1e293b; color: var(--text); font-size: 11px; white-space: nowrap;
+      padding: 4px 8px; border-radius: 5px; border: 1px solid var(--border);
+      pointer-events: none; z-index: 10;
+    }
+
+    .uptime-legend {
+      display: flex; justify-content: space-between;
+      font-size: 11px; color: var(--muted); margin-top: 6px;
+    }
+
+    /* ── INCIDENT HISTORY ── */
+    .incidents { display: flex; flex-direction: column; gap: 0; }
+
+    .incident {
+      border: 1px solid var(--border); border-bottom: none;
+      background: var(--surface); padding: 18px 20px;
+      display: flex; gap: 16px; align-items: flex-start;
+    }
+    .incident:first-child { border-radius: 10px 10px 0 0; }
+    .incident:last-child  { border-bottom: 1px solid var(--border); border-radius: 0 0 10px 10px; }
+    .incident:only-child  { border-radius: 10px; border-bottom: 1px solid var(--border); }
+
+    .inc-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      margin-top: 4px; flex-shrink: 0;
+    }
+    .inc-dot.resolved { background: var(--green); }
+    .inc-dot.ongoing  { background: var(--red); }
+    .inc-dot.error    { background: var(--yellow); }
+
+    .inc-body { flex: 1; }
+    .inc-title { font-size: 14px; font-weight: 600; }
+    .inc-meta  { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.6; }
+
+    .inc-timeline {
+      margin-top: 10px; padding-top: 10px;
+      border-top: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .inc-event {
+      display: flex; gap: 10px; align-items: baseline;
+      font-size: 12px;
+    }
+    .inc-event-time  { color: var(--muted); white-space: nowrap; min-width: 130px; }
+    .inc-event-label { color: var(--faint); }
+
+    .inc-pill {
+      font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px;
+      white-space: nowrap; align-self: flex-start;
+    }
+    .inc-pill.resolved { background: rgba(16,185,129,0.15); color: var(--green); }
+    .inc-pill.ongoing  { background: rgba(239,68,68,0.15);  color: var(--red); }
+
+    .no-incidents {
+      text-align: center; padding: 36px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+      color: var(--muted); font-size: 14px;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center; font-size: 12px; color: var(--muted);
+      padding: 20px; border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--blue); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <span class="logo-icon">🗼</span>
+    <span class="logo-title">Watchtower</span>
+    <span class="logo-badge">Status</span>
+  </div>
+  <div class="header-meta">Last updated: <span id="last-checked">—</span></div>
+</header>
+
+<main>
+
+  <!-- HERO -->
+  <div class="hero" id="hero">
+    <div class="hero-icon" id="hero-icon">…</div>
+    <div class="hero-text">
+      <h1 id="hero-title">Checking status…</h1>
+      <p id="hero-sub">Fetching current data</p>
+    </div>
+    <div class="hero-slo">
+      <div class="pct" id="uptime-pct">—</div>
+      <div class="label">Uptime today</div>
+    </div>
+  </div>
+
+  <!-- COMPONENTS -->
+  <div class="section-label">Components</div>
+  <div class="components" id="components">
+
+    <div class="component" id="comp-api">
+      <div class="component-header">
+        <div>
+          <div class="component-name">API Server</div>
+          <div class="component-desc">Health endpoint · REST API</div>
+        </div>
+        <span class="badge" id="badge-api">—</span>
+      </div>
+      <div class="uptime-bars" id="bars-api"></div>
+      <div class="uptime-legend">
+        <span>30 days ago</span>
+        <span id="avg-api">—</span>
+        <span>Today</span>
+      </div>
+    </div>
+
+    <div class="component" id="comp-db">
+      <div class="component-header">
+        <div>
+          <div class="component-name">Database</div>
+          <div class="component-desc">PostgreSQL · URL &amp; user storage</div>
+        </div>
+        <span class="badge" id="badge-db">—</span>
+      </div>
+      <div class="uptime-bars" id="bars-db"></div>
+      <div class="uptime-legend">
+        <span>30 days ago</span>
+        <span id="avg-db">—</span>
+        <span>Today</span>
+      </div>
+    </div>
+
+    <div class="component" id="comp-shortener">
+      <div class="component-header">
+        <div>
+          <div class="component-name">URL Shortener</div>
+          <div class="component-desc">Shorten · redirect · manage URLs</div>
+        </div>
+        <span class="badge" id="badge-shortener">—</span>
+      </div>
+      <div class="uptime-bars" id="bars-shortener"></div>
+      <div class="uptime-legend">
+        <span>30 days ago</span>
+        <span id="avg-shortener">—</span>
+        <span>Today</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- INCIDENT HISTORY -->
+  <div class="section-label">Incident History</div>
+  <div id="incidents-list">
+    <div class="no-incidents">Loading…</div>
+  </div>
+
+</main>
+
+<footer>
+  Powered by <a href="/dashboard">Watchtower</a>
+  &nbsp;·&nbsp; Auto-refreshes every 30s
+</footer>
+
+<script>
+  function fmt(iso) {
+    if (!iso) return "—";
+    return new Date(iso).toLocaleString(undefined, {
+      month: "short", day: "numeric",
+      hour: "2-digit", minute: "2-digit"
+    });
+  }
+
+  function fmtDuration(secs) {
+    if (secs == null) return null;
+    const m = Math.floor(secs / 60), s = Math.round(secs % 60);
+    return m > 0 ? `${m}m ${s}s` : `${s}s`;
+  }
+
+  function setBadge(id, status) {
+    const el = document.getElementById(id);
+    const map = {
+      ok:          ["Operational", "operational"],
+      operational: ["Operational", "operational"],
+      degraded:    ["Degraded",    "degraded"],
+      down:        ["Down",        "degraded"],
+      unknown:     ["Unknown",     "unknown"],
+    };
+    const [label, cls] = map[status] || ["Unknown", "unknown"];
+    el.textContent = label;
+    el.className = "badge " + cls;
+  }
+
+  function renderBars(containerId, history, avgId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = "";
+
+    let totalUptime = 0, daysWithData = 0;
+
+    history.forEach(day => {
+      const bar = document.createElement("div");
+      bar.className = "bar";
+
+      if (day.total === 0) {
+        bar.classList.add("empty");
+        bar.setAttribute("data-tip", `${day.date} — No data`);
+      } else if (day.uptime >= 99) {
+        bar.classList.add("green");
+        bar.setAttribute("data-tip", `${day.date} — ${day.uptime}% uptime`);
+        totalUptime += day.uptime; daysWithData++;
+      } else if (day.uptime >= 80) {
+        bar.classList.add("yellow");
+        bar.setAttribute("data-tip", `${day.date} — ${day.uptime}% uptime (degraded)`);
+        totalUptime += day.uptime; daysWithData++;
+      } else {
+        bar.classList.add("red");
+        bar.setAttribute("data-tip", `${day.date} — ${day.uptime}% uptime (incident)`);
+        totalUptime += day.uptime; daysWithData++;
+      }
+
+      container.appendChild(bar);
+    });
+
+    const avg = daysWithData > 0 ? (totalUptime / daysWithData).toFixed(2) + "% uptime" : "No data yet";
+    document.getElementById(avgId).textContent = avg;
+  }
+
+  async function refresh() {
+    // Health + SLO + uptime history in parallel
+    const [healthRes, sloRes, historyRes, incidentsRes] = await Promise.allSettled([
+      fetch("/health"),
+      fetch("/slo"),
+      fetch("/uptime-history"),
+      fetch("/incidents"),
+    ]);
+
+    const health    = healthRes.status    === "fulfilled" ? await healthRes.value.json()    : null;
+    const slo       = sloRes.status       === "fulfilled" ? await sloRes.value.json()       : null;
+    const history   = historyRes.status   === "fulfilled" ? await historyRes.value.json()   : null;
+    const incidents = incidentsRes.status === "fulfilled" ? await incidentsRes.value.json() : null;
+
+    // Hero
+    const isUp = health?.status === "ok";
+    const dbOk = health?.database === "ok";
+    const hero = document.getElementById("hero");
+    hero.className = "hero " + (isUp ? "up" : "down");
+    document.getElementById("hero-icon").textContent  = isUp ? "🟢" : "🔴";
+    document.getElementById("hero-title").textContent = isUp
+      ? "All Systems Operational" : "Service Disrupted";
+    document.getElementById("hero-sub").textContent = isUp
+      ? "Everything is running normally."
+      : "We are aware of the issue and working to resolve it.";
+
+    const pct = slo && slo.total_requests > 0
+      ? slo.uptime_percent.toFixed(2) + "%"
+      : "100%";
+    document.getElementById("uptime-pct").textContent = pct;
+
+    // Badges
+    setBadge("badge-api",       isUp ? "ok" : "down");
+    setBadge("badge-db",        health ? (dbOk ? "ok" : "degraded") : "unknown");
+    setBadge("badge-shortener", isUp && dbOk ? "ok" : "degraded");
+
+    // Bars — all three components share the same log-based history
+    if (history) {
+      renderBars("bars-api",       history, "avg-api");
+      renderBars("bars-db",        history, "avg-db");
+      renderBars("bars-shortener", history, "avg-shortener");
+    }
+
+    // Incidents
+    const list = document.getElementById("incidents-list");
+    if (!incidents || incidents.length === 0) {
+      list.innerHTML = `<div class="no-incidents">🎉 No incidents recorded. All clear.</div>`;
+    } else {
+      const typeLabel = t => t === "service_down" ? "Service Down" : "High Error Rate";
+      list.innerHTML = `<div class="incidents">` + incidents.slice(0, 10).map(inc => {
+        const resolved  = !!inc.resolved_at;
+        const dotClass  = resolved ? "resolved" : (inc.type === "service_down" ? "ongoing" : "error");
+        const pillClass = resolved ? "resolved" : "ongoing";
+        const pillText  = resolved ? "Resolved" : "Ongoing";
+        const duration  = fmtDuration(inc.duration_seconds);
+        return `
+        <div class="incident">
+          <div class="inc-dot ${dotClass}"></div>
+          <div class="inc-body">
+            <div class="inc-title">${typeLabel(inc.type)}</div>
+            <div class="inc-timeline">
+              <div class="inc-event">
+                <span class="inc-event-time">${fmt(inc.started_at)}</span>
+                <span class="inc-event-label">Incident detected</span>
+              </div>
+              ${resolved ? `
+              <div class="inc-event">
+                <span class="inc-event-time">${fmt(inc.resolved_at)}</span>
+                <span class="inc-event-label">Resolved${duration ? " after " + duration : ""}</span>
+              </div>` : `
+              <div class="inc-event">
+                <span class="inc-event-time">Now</span>
+                <span class="inc-event-label" style="color:var(--red)">Still ongoing</span>
+              </div>`}
+            </div>
+          </div>
+          <span class="inc-pill ${pillClass}">${pillText}</span>
+        </div>`;
+      }).join("") + `</div>`;
+    }
+
+    document.getElementById("last-checked").textContent =
+      new Date().toLocaleTimeString();
+
+    // Auto-refresh every 30s
+    setTimeout(refresh, 30000);
+  }
+
+  refresh();
+</script>
+</body>
+</html>

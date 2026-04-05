@@ -123,6 +123,60 @@ def incidents():
     ])
 
 
+@observability_bp.route("/uptime-history")
+def uptime_history():
+    """Return per-day uptime stats for the last 30 days, computed from the log file."""
+    import json
+    from datetime import datetime, timezone, timedelta
+
+    log_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "logs", "app.log")
+    )
+
+    # Build a dict of date → {total, errors}
+    days: dict[str, dict] = {}
+    try:
+        with open(log_path) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    entry = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if entry.get("message") != "request":
+                    continue
+                ts = entry.get("timestamp", "")
+                try:
+                    day = datetime.fromisoformat(ts).strftime("%Y-%m-%d")
+                except Exception:
+                    continue
+                if day not in days:
+                    days[day] = {"total": 0, "errors": 0}
+                days[day]["total"] += 1
+                if entry.get("status", 0) >= 500:
+                    days[day]["errors"] += 1
+    except FileNotFoundError:
+        pass
+
+    # Build last 30 days in order, filling gaps with None
+    result = []
+    today = datetime.now(timezone.utc).date()
+    for i in range(29, -1, -1):
+        day = (today - timedelta(days=i)).isoformat()
+        stats = days.get(day)
+        if stats and stats["total"] > 0:
+            uptime = round((stats["total"] - stats["errors"]) / stats["total"] * 100, 1)
+        else:
+            uptime = None
+        result.append({"date": day, "uptime": uptime,
+                        "total": stats["total"] if stats else 0,
+                        "errors": stats["errors"] if stats else 0})
+
+    return jsonify(result)
+
+
 @observability_bp.route("/debug/crash")
 def debug_crash():
     """Test endpoint: returns 500 to trigger high-error-rate alerting."""

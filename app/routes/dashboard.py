@@ -52,6 +52,11 @@ def logout():
     return resp
 
 
+@dashboard_bp.route("/status")
+def status():
+    return render_template("status.html")
+
+
 @dashboard_bp.route("/dashboard")
 @_login_required
 def home():
