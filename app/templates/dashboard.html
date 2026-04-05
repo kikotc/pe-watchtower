@@ -35,37 +35,81 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 32px;
-      height: 62px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
+      padding: 0 40px;
+      height: 82px;
+      background: rgba(15,22,41,0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(59,130,246,0.12);
+      box-shadow: 0 1px 0 rgba(59,130,246,0.08), 0 8px 32px rgba(0,0,0,0.4);
       position: sticky;
       top: 0;
       z-index: 100;
     }
-    .header-left { display: flex; align-items: center; gap: 12px; }
-    .logo-icon   { font-size: 22px; line-height: 1; }
-    .logo-title  { font-size: 17px; font-weight: 700; letter-spacing: -0.2px; color: #f1f5f9; }
-    .logo-badge  {
-      font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
-      color: var(--blue); background: rgba(59,130,246,0.12);
-      border: 1px solid rgba(59,130,246,0.25); border-radius: 4px; padding: 3px 8px;
+
+    .header-left  { display: flex; align-items: center; gap: 16px; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+
+    /* logo box */
+    .logo-box {
+      width: 50px; height: 50px; border-radius: 13px; flex-shrink: 0;
+      background: linear-gradient(145deg, #2563eb 0%, #1e3a8a 100%);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 0 28px rgba(59,130,246,0.6), 0 4px 12px rgba(0,0,0,0.4);
+      display: flex; align-items: center; justify-content: center;
     }
-    .header-right { display: flex; align-items: center; gap: 20px; }
-    #last-updated { font-size: 13px; color: var(--muted); }
-    .btn-logout {
-      font-size: 13px; font-weight: 500; color: var(--muted); text-decoration: none;
-      border: 1px solid var(--border2); border-radius: 6px; padding: 6px 14px;
-      transition: color 0.2s, border-color 0.2s;
+    .logo-box svg { width: 28px; height: 28px; }
+
+    .logo-text-wrap { display: flex; flex-direction: column; gap: 3px; }
+    .logo-title {
+      font-size: 20px; font-weight: 700; letter-spacing: -0.4px; line-height: 1;
+      background: linear-gradient(135deg, #f1f5f9 20%, #94a3b8 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
-    .btn-logout:hover { color: var(--text); border-color: var(--faint); }
+    .logo-sub { font-size: 11px; font-weight: 500; letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); }
+
+    .header-divider { width: 1px; height: 32px; background: var(--border); margin: 0 10px; }
+
+    /* timestamp */
+    #last-updated {
+      font-size: 13px; color: var(--muted); padding: 0 10px;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .live-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--green);
+      animation: pulse 2s infinite; flex-shrink: 0;
+    }
+
+    /* nav buttons shared base */
+    .btn-nav {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 14px; font-weight: 500; text-decoration: none;
+      border-radius: 9px; padding: 9px 18px; border: 1px solid transparent;
+      transition: background 0.18s, border-color 0.18s, color 0.18s, box-shadow 0.18s;
+      white-space: nowrap;
+    }
+    .btn-nav svg { flex-shrink: 0; width: 17px; height: 17px; }
+
     .btn-runbook {
-      font-size: 13px; font-weight: 500; color: var(--yellow); text-decoration: none;
-      border: 1px solid rgba(245,158,11,0.3); border-radius: 6px; padding: 6px 14px;
-      background: rgba(245,158,11,0.07);
-      transition: color 0.2s, border-color 0.2s, background 0.2s;
+      color: #fbbf24; background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.22);
     }
-    .btn-runbook:hover { background: rgba(245,158,11,0.14); border-color: var(--yellow); }
+    .btn-runbook:hover {
+      background: rgba(245,158,11,0.16); border-color: rgba(245,158,11,0.5);
+      box-shadow: 0 0 12px rgba(245,158,11,0.2);
+    }
+
+    .btn-status {
+      color: #34d399; background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.22);
+    }
+    .btn-status:hover {
+      background: rgba(16,185,129,0.16); border-color: rgba(16,185,129,0.5);
+      box-shadow: 0 0 12px rgba(16,185,129,0.2);
+    }
+
+    .btn-logout {
+      color: var(--muted); background: transparent; border-color: var(--border2);
+    }
+    .btn-logout:hover { color: var(--text); background: rgba(255,255,255,0.05); border-color: var(--faint); }
 
     /* ── LAYOUT ── */
     main {
@@ -85,13 +129,19 @@
     /* ── STATUS BANNER ── */
     #status-banner {
       display: flex; align-items: center; gap: 12px;
-      padding: 14px 20px; border-radius: 10px;
+      padding: 15px 22px; border-radius: 12px;
       border: 1px solid var(--border); background: var(--surface);
       font-size: 15px; font-weight: 500;
-      transition: background 0.3s, border-color 0.3s;
+      transition: background 0.4s, border-color 0.4s, box-shadow 0.4s;
     }
-    #status-banner.healthy  { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.06); }
-    #status-banner.degraded { border-color: rgba(239,68,68,0.4);  background: rgba(239,68,68,0.06); }
+    #status-banner.healthy  {
+      border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.06);
+      box-shadow: 0 0 24px rgba(16,185,129,0.08);
+    }
+    #status-banner.degraded {
+      border-color: rgba(239,68,68,0.4);  background: rgba(239,68,68,0.06);
+      box-shadow: 0 0 24px rgba(239,68,68,0.12);
+    }
 
     .pulse-dot {
       width: 11px; height: 11px; border-radius: 50%;
@@ -141,19 +191,37 @@
     .ring-danger { animation: ring-danger 1.4s ease-in-out infinite; }
 
     /* ── STAT CARD (icon) ── */
-    .stat-card { display: flex; align-items: center; gap: 18px; }
+    .stat-card {
+      display: flex; align-items: center; gap: 18px;
+      border-left: 3px solid transparent;
+      transition: border-color 0.3s, transform 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-2px); }
+    .stat-card.sc-blue   { border-left-color: rgba(59,130,246,0.55); }
+    .stat-card.sc-green  { border-left-color: rgba(16,185,129,0.55); }
+    .stat-card.sc-purple { border-left-color: rgba(139,92,246,0.55); }
     .stat-icon { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
-    .icon-blue   { background: rgba(59,130,246,0.15); }
-    .icon-green  { background: rgba(16,185,129,0.15); }
-    .icon-purple { background: rgba(139,92,246,0.15); }
+    .icon-blue   { background: rgba(59,130,246,0.15);  box-shadow: 0 0 14px rgba(59,130,246,0.18); }
+    .icon-green  { background: rgba(16,185,129,0.15);  box-shadow: 0 0 14px rgba(16,185,129,0.18); }
+    .icon-purple { background: rgba(139,92,246,0.15);  box-shadow: 0 0 14px rgba(139,92,246,0.18); }
     .stat-info .stat-num { font-size: 28px; font-weight: 700; color: #f1f5f9; }
     .stat-info .stat-lbl { font-size: 13px; color: var(--muted); margin-top: 2px; }
 
     /* ── COLORED STAT CARD (error rate, avg response) ── */
-    .colored-stat { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; gap: 10px; }
-    .colored-num  { font-size: 38px; font-weight: 700; line-height: 1; transition: color 0.4s; }
+    .colored-stat {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 28px 24px; gap: 10px;
+      position: relative; overflow: hidden;
+    }
+    .colored-stat::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 12px 12px 0 0;
+    }
+    .colored-stat.cs-err::before  { background: linear-gradient(90deg, var(--red), transparent); }
+    .colored-stat.cs-resp::before { background: linear-gradient(90deg, var(--blue), transparent); }
+    .colored-stat-icon { margin-bottom: 2px; opacity: 0.5; }
+    .colored-num  { font-size: 42px; font-weight: 700; line-height: 1; transition: color 0.4s; }
     .colored-unit { font-size: 15px; font-weight: 400; color: var(--muted); margin-left: 3px; }
-    .colored-lbl  { font-size: 13px; color: var(--muted); font-weight: 500; }
+    .colored-lbl  { font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; }
     .c-green  { color: var(--green); }
     .c-yellow { color: var(--yellow); }
     .c-red    { color: var(--red); }
@@ -163,7 +231,7 @@
       display: flex; align-items: center; justify-content: space-between;
       padding: 16px 20px; border-bottom: 1px solid var(--border);
     }
-    .section-title { font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+    .section-title { font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 7px; }
     .section-badge {
       font-size: 12px; color: var(--blue);
       background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2);
@@ -180,74 +248,140 @@
       padding: 0 4px;
     }
 
+    /* ── CHART CARD ACCENTS ── */
+    .chart-card-blue  { border-left: 3px solid rgba(59,130,246,0.5); }
+    .chart-card-green { border-left: 3px solid rgba(16,185,129,0.5); }
+    .chart-card-red   { border-left: 3px solid rgba(239,68,68,0.5); }
+    .chart-card-amber { border-left: 3px solid rgba(245,158,11,0.5); }
+    .chart-title { display: flex; align-items: center; gap: 7px; }
+    .chart-dot {
+      width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+    }
+
     /* ── TOP ENDPOINTS ── */
     .panel-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
     .endpoint-row {
-      display: flex; align-items: center; gap: 12px;
-      padding: 10px 20px; border-bottom: 1px solid rgba(30,45,74,0.4);
-      transition: background 0.15s;
+      position: relative; overflow: hidden;
+      display: flex; flex-direction: column; gap: 7px;
+      padding: 11px 20px 10px; border-bottom: 1px solid rgba(30,45,74,0.4);
+      transition: filter 0.15s;
     }
     .endpoint-row:last-child { border-bottom: none; }
-    .endpoint-row:hover { background: var(--surface2); }
-    .endpoint-rank  { font-size: 11px; color: var(--muted); width: 16px; text-align: center; flex-shrink: 0; }
-    .endpoint-path  { font-family: "SF Mono","Fira Code",monospace; font-size: 13px; color: #c4d4f0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .endpoint-bar-wrap { width: 70px; height: 4px; background: var(--border2); border-radius: 99px; overflow: hidden; flex-shrink: 0; }
-    .endpoint-bar   { height: 100%; background: var(--blue); border-radius: 99px; transition: width 0.5s ease; }
-    .endpoint-count { font-size: 12px; color: var(--muted); width: 28px; text-align: right; font-family: "SF Mono",monospace; flex-shrink: 0; }
+    .endpoint-row:hover { filter: brightness(1.18); }
+    .endpoint-top { display: flex; align-items: center; gap: 12px; position: relative; z-index: 1; }
+    .endpoint-bar-track {
+      height: 5px; background: rgba(30,45,74,0.8); border-radius: 99px;
+      margin-left: 32px; overflow: hidden; position: relative; z-index: 1;
+    }
+    .endpoint-bar-fill {
+      height: 100%; border-radius: 99px;
+      background: linear-gradient(90deg, #3b82f6 0%, #38bdf8 100%);
+      transition: width 0.65s cubic-bezier(0.4,0,0.2,1);
+    }
+    .rank-1 .endpoint-bar-fill, .rank-1 ~ .endpoint-bar-track .endpoint-bar-fill { background: linear-gradient(90deg, #f59e0b, #fcd34d); }
+    .rank-2 .endpoint-bar-fill { background: linear-gradient(90deg, #94a3b8, #cbd5e1); }
+    .endpoint-fill {
+      position: absolute; left: 0; top: 0; bottom: 0;
+      background: linear-gradient(90deg, rgba(59,130,246,0.13) 0%, rgba(59,130,246,0.04) 80%, transparent 100%);
+      transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+      pointer-events: none;
+    }
+    .endpoint-rank {
+      font-size: 11px; font-weight: 700; width: 20px; text-align: center;
+      flex-shrink: 0; z-index: 1; font-family: "SF Mono",monospace;
+    }
+    .rank-1 { color: #fbbf24; text-shadow: 0 0 8px rgba(251,191,36,0.6); }
+    .rank-2 { color: #94a3b8; text-shadow: 0 0 8px rgba(148,163,184,0.4); }
+    .rank-3 { color: #cd7c2f; text-shadow: 0 0 8px rgba(205,124,47,0.5); }
+    .rank-other { color: var(--muted); }
+    .endpoint-path  { font-family: "SF Mono","Fira Code",monospace; font-size: 13px; color: #c4d4f0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; z-index: 1; }
+    .endpoint-count {
+      font-size: 11px; font-weight: 600; font-family: "SF Mono",monospace;
+      color: var(--blue); background: rgba(59,130,246,0.1);
+      border: 1px solid rgba(59,130,246,0.2); border-radius: 5px;
+      padding: 2px 8px; flex-shrink: 0; z-index: 1;
+    }
 
     /* ── ACTIVE URLS ── */
     .url-row {
-      display: grid; grid-template-columns: 90px 1fr 60px;
-      gap: 12px; align-items: center;
-      padding: 10px 20px; border-bottom: 1px solid rgba(30,45,74,0.4);
-      transition: background 0.15s;
+      display: grid; grid-template-columns: 100px 1fr 72px;
+      gap: 14px; align-items: center;
+      padding: 11px 20px; border-bottom: 1px solid rgba(30,45,74,0.4);
+      border-left: 3px solid transparent;
+      transition: background 0.15s, border-color 0.2s;
     }
-    .url-row:last-child  { border-bottom: none; }
-    .url-row:hover       { background: var(--surface2); }
-    .url-code    { font-family: "SF Mono","Fira Code",monospace; font-size: 14px; font-weight: 700; color: var(--blue); }
-    .url-original{ font-size: 12px; color: var(--faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .url-active  { font-size: 11px; font-weight: 600; color: var(--green); text-align: right; }
-    .url-inactive{ font-size: 11px; color: var(--muted); text-align: right; }
+    .url-row:last-child { border-bottom: none; }
+    .url-row:hover      { background: var(--surface2); border-left-color: rgba(59,130,246,0.4); }
+    .url-code {
+      font-family: "SF Mono","Fira Code",monospace; font-size: 13px; font-weight: 700;
+      color: var(--blue); background: rgba(59,130,246,0.1);
+      border: 1px solid rgba(59,130,246,0.22); border-radius: 6px;
+      padding: 3px 10px; display: inline-block;
+    }
+    .url-original { font-size: 12px; color: var(--faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .url-status   { display: flex; align-items: center; gap: 6px; justify-content: flex-end; font-size: 11px; font-weight: 600; }
+    .url-dot      { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .url-dot.on   { background: var(--green); box-shadow: 0 0 6px rgba(16,185,129,0.7); animation: pulse 2s infinite; }
+    .url-dot.off  { background: var(--muted); }
+    .url-on-lbl   { color: var(--green); }
+    .url-off-lbl  { color: var(--muted); }
 
     /* ── LOG FEED ── */
     #log-feed  { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-    #log-list  { max-height: 300px; overflow-y: auto; padding: 6px 0; }
+    #log-list  { max-height: 340px; overflow-y: auto; padding: 4px 0; }
     #log-list::-webkit-scrollbar       { width: 4px; }
     #log-list::-webkit-scrollbar-track { background: transparent; }
     #log-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+    @keyframes log-flash { 0%{background:rgba(59,130,246,0.08)} 100%{background:transparent} }
     .log-entry {
-      display: grid; grid-template-columns: 88px 68px 58px 52px 1fr 76px;
-      gap: 10px; align-items: center; padding: 7px 20px;
+      display: grid; grid-template-columns: 88px 72px 52px 52px 1fr 80px;
+      gap: 10px; align-items: center; padding: 8px 20px;
       font-family: "SF Mono","Fira Code","Menlo",monospace; font-size: 13px;
-      border-bottom: 1px solid rgba(30,45,74,0.5); transition: background 0.15s;
+      border-bottom: 1px solid rgba(30,45,74,0.4);
+      border-left: 3px solid transparent;
+      transition: background 0.15s;
     }
     .log-entry:last-child { border-bottom: none; }
-    .log-entry:hover { background: var(--surface2); }
+    .log-entry:hover { background: rgba(255,255,255,0.03); }
+    .log-entry.log-new { animation: log-flash 0.8s ease-out; }
+    .log-entry[data-level="INFO"]    { border-left-color: rgba(125,211,252,0.4); }
+    .log-entry[data-level="WARNING"] { border-left-color: rgba(245,158,11,0.5); }
+    .log-entry[data-level="ERROR"]   { border-left-color: rgba(239,68,68,0.6); }
+    .log-entry[data-level="DEBUG"]   { border-left-color: rgba(100,116,139,0.25); }
     .log-time   { color: var(--muted); }
-    .log-level  { font-weight: 600; border-radius: 3px; padding: 2px 6px; text-align: center; font-size: 11px; }
-    .level-INFO    { color: #7dd3fc; background: rgba(125,211,252,0.1); }
-    .level-WARNING { color: var(--yellow); background: rgba(245,158,11,0.1); }
-    .level-ERROR   { color: var(--red); background: rgba(239,68,68,0.1); }
-    .level-DEBUG   { color: var(--muted); background: rgba(100,116,139,0.1); }
+    .log-level  { font-weight: 700; border-radius: 4px; padding: 2px 7px; text-align: center; font-size: 10px; letter-spacing: 0.5px; }
+    .level-INFO    { color: #7dd3fc; background: rgba(125,211,252,0.1); border: 1px solid rgba(125,211,252,0.2); }
+    .level-WARNING { color: var(--yellow); background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.25); }
+    .level-ERROR   { color: var(--red); background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); }
+    .level-DEBUG   { color: var(--muted); background: rgba(100,116,139,0.1); border: 1px solid rgba(100,116,139,0.2); }
     .log-method { color: var(--faint); }
-    .status-2xx { color: var(--green); }
-    .status-4xx { color: var(--yellow); }
-    .status-5xx { color: var(--red); }
+    .status-2xx { color: var(--green); font-weight: 600; }
+    .status-4xx { color: var(--yellow); font-weight: 600; }
+    .status-5xx { color: var(--red); font-weight: 600; }
     .log-path   { color: #c4d4f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .log-dur    { color: var(--muted); text-align: right; }
 
     /* ── EVENTS TABLE ── */
     #events-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
     table  { width: 100%; border-collapse: collapse; }
-    th     { text-align: left; padding: 11px 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); }
-    td     { padding: 10px 20px; font-size: 13px; color: var(--faint); border-bottom: 1px solid rgba(30,45,74,0.4); font-family: "SF Mono","Fira Code",monospace; }
+    th     {
+      text-align: left; padding: 12px 20px;
+      font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--muted); border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+    }
+    td     { padding: 11px 20px; font-size: 13px; color: var(--faint); border-bottom: 1px solid rgba(30,45,74,0.4); font-family: "SF Mono","Fira Code",monospace; }
     tr:last-child td { border-bottom: none; }
-    tr:hover td      { background: var(--surface2); }
-    .event-type    { display: inline-block; padding: 3px 9px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-    .event-created { color: var(--green);  background: rgba(16,185,129,0.1); }
-    .event-deleted { color: var(--red);    background: rgba(239,68,68,0.1); }
-    .event-updated { color: var(--yellow); background: rgba(245,158,11,0.1); }
-    .event-other   { color: var(--muted);  background: rgba(100,116,139,0.1); }
+    tr:hover td      { background: rgba(255,255,255,0.025); }
+    tr.ev-created td:first-child { border-left: 3px solid rgba(16,185,129,0.55); }
+    tr.ev-deleted td:first-child { border-left: 3px solid rgba(239,68,68,0.55); }
+    tr.ev-updated td:first-child { border-left: 3px solid rgba(245,158,11,0.55); }
+    tr.ev-other   td:first-child { border-left: 3px solid rgba(100,116,139,0.35); }
+    .event-type    { display: inline-block; padding: 3px 9px; border-radius: 5px; font-size: 10px; font-weight: 700; letter-spacing: 0.4px; }
+    .event-created { color: var(--green);  background: rgba(16,185,129,0.1);  border: 1px solid rgba(16,185,129,0.25); }
+    .event-deleted { color: var(--red);    background: rgba(239,68,68,0.1);   border: 1px solid rgba(239,68,68,0.25); }
+    .event-updated { color: var(--yellow); background: rgba(245,158,11,0.1);  border: 1px solid rgba(245,158,11,0.25); }
+    .event-other   { color: var(--muted);  background: rgba(100,116,139,0.1); border: 1px solid rgba(100,116,139,0.2); }
 
     .empty-state { text-align: center; padding: 32px; color: var(--muted); font-size: 13px; }
 
@@ -323,12 +457,17 @@
     }
     .tab-btn {
       background: none; border: none; cursor: pointer;
-      padding: 10px 20px; font-size: 14px; font-weight: 600;
+      padding: 10px 22px; font-size: 14px; font-weight: 600;
       color: var(--muted); border-bottom: 2px solid transparent;
-      margin-bottom: -1px; transition: color 0.15s, border-color 0.15s;
+      margin-bottom: -1px; transition: color 0.15s, border-color 0.15s, background 0.15s;
+      border-radius: 6px 6px 0 0;
     }
-    .tab-btn:hover { color: var(--text); }
-    .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+    .tab-btn.active {
+      color: #f1f5f9; border-bottom-color: var(--blue);
+      background: rgba(59,130,246,0.08);
+      text-shadow: 0 0 20px rgba(59,130,246,0.5);
+    }
     .tab-panel { display: none; flex-direction: column; gap: 22px; }
     .tab-panel.active { display: flex; }
 
@@ -366,15 +505,64 @@
 
   <header>
     <div class="header-left">
-      <div class="logo-icon">🛡</div>
-      <div class="logo-title">Watchtower</div>
-      <div class="logo-badge">Admin</div>
+      <div class="logo-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <!-- lighthouse tower body (behind eye) -->
+          <line x1="12" y1="22" x2="12" y2="13" stroke="rgba(255,255,255,0.3)" stroke-width="1.4"/>
+          <line x1="10" y1="22" x2="14" y2="22" stroke="rgba(255,255,255,0.3)" stroke-width="1.4"/>
+          <line x1="10.5" y1="18" x2="13.5" y2="18" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <!-- lighthouse lantern cap -->
+          <path d="M10,13 L12,10.5 L14,13Z" fill="rgba(255,255,255,0.25)" stroke="rgba(255,255,255,0.35)" stroke-width="1"/>
+          <!-- light beam rays -->
+          <line x1="12" y1="10" x2="5" y2="6"  stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+          <line x1="12" y1="10" x2="19" y2="6" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+          <!-- scan arc above eye -->
+          <path d="M6,9 A8,8 0 0,1 18,9" stroke="rgba(255,255,255,0.5)" stroke-width="1.3"/>
+          <!-- outer scan arc -->
+          <path d="M3,7 A11,11 0 0,1 21,7" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <!-- eye almond -->
+          <path d="M2,12 C6,7 18,7 22,12 C18,17 6,17 2,12Z" stroke="white" stroke-width="1.6"/>
+          <!-- iris ring -->
+          <circle cx="12" cy="12" r="3.8" stroke="white" stroke-width="1.5"/>
+          <!-- pupil filled -->
+          <circle cx="12" cy="12" r="1.7" fill="white" stroke="none"/>
+          <!-- shine -->
+          <circle cx="13.2" cy="10.8" r="0.7" fill="rgba(255,255,255,0.6)" stroke="none"/>
+          <!-- side target ticks -->
+          <line x1="1" y1="12" x2="3.2" y2="12" stroke="rgba(255,255,255,0.35)" stroke-width="1.3"/>
+          <line x1="20.8" y1="12" x2="23" y2="12" stroke="rgba(255,255,255,0.35)" stroke-width="1.3"/>
+        </svg>
+      </div>
+      <div class="logo-text-wrap">
+        <div class="logo-title">Watchtower</div>
+        <div class="logo-sub">Admin Console</div>
+      </div>
+      <div class="header-divider"></div>
+      <div class="logo-badge">Live</div>
     </div>
     <div class="header-right">
-      <span id="last-updated">Loading…</span>
-      <a href="/dashboard/runbook" class="btn-runbook">📖 Runbook</a>
-      <a href="/" class="btn-runbook">🟢 Status Page</a>
-      <a href="/dashboard/logout" class="btn-logout">Sign out</a>
+      <span id="last-updated">
+        <span class="live-dot"></span>Loading…
+      </span>
+      <div class="header-divider"></div>
+      <a href="/dashboard/runbook" class="btn-nav btn-runbook">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+        </svg>
+        Runbook
+      </a>
+      <a href="/" class="btn-nav btn-status">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        Status
+      </a>
+      <a href="/dashboard/logout" class="btn-nav btn-logout">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Sign out
+      </a>
     </div>
   </header>
 
@@ -493,7 +681,7 @@
 
     <!-- STATS ROW -->
     <div class="grid-3">
-      <div class="card stat-card">
+      <div class="card stat-card sc-blue">
         <div class="stat-icon icon-blue">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
@@ -504,7 +692,7 @@
           <div class="stat-lbl">Total Users</div>
         </div>
       </div>
-      <div class="card stat-card">
+      <div class="card stat-card sc-green">
         <div class="stat-icon icon-green">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
@@ -516,7 +704,7 @@
           <div class="stat-lbl">Short URLs</div>
         </div>
       </div>
-      <div class="card stat-card">
+      <div class="card stat-card sc-purple">
         <div class="stat-icon icon-purple">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
@@ -535,7 +723,10 @@
       <!-- SLO UPTIME WIDGET -->
       <div class="card" style="padding:0;overflow:hidden;">
         <div class="panel-header">
-          <span class="section-title">SLO Uptime</span>
+          <span class="section-title">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M12 2L3 7v5c0 5.25 3.8 10.15 9 11.35C17.2 22.15 21 17.25 21 12V7L12 2z"/></svg>
+            SLO Uptime
+          </span>
           <span class="section-badge" id="slo-status-badge">—</span>
         </div>
         <div class="slo-card">
@@ -561,7 +752,10 @@
       <!-- INCIDENT HISTORY -->
       <div class="panel-card">
         <div class="panel-header">
-          <span class="section-title">Incident History</span>
+          <span class="section-title">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Incident History
+          </span>
           <span class="section-badge">Last 20</span>
         </div>
         <div id="incident-list" style="max-height:180px;overflow-y:auto;">
@@ -606,9 +800,9 @@
       </div>
     <div class="grid-2">
 
-      <div class="chart-card">
+      <div class="chart-card chart-card-blue">
         <div class="chart-header">
-          <span class="chart-title">CPU History</span>
+          <span class="chart-title"><span class="chart-dot" style="background:#3b82f6;box-shadow:0 0 6px #3b82f6"></span>CPU History</span>
           <div><span class="chart-current" id="hcpu-val">—</span><span class="chart-unit">%</span></div>
         </div>
         <div class="chart-body">
@@ -626,9 +820,9 @@
         </div>
       </div>
 
-      <div class="chart-card">
+      <div class="chart-card chart-card-green">
         <div class="chart-header">
-          <span class="chart-title">RAM History</span>
+          <span class="chart-title"><span class="chart-dot" style="background:#10b981;box-shadow:0 0 6px #10b981"></span>RAM History</span>
           <div><span class="chart-current" id="hram-val">—</span><span class="chart-unit">%</span></div>
         </div>
         <div class="chart-body">
@@ -646,9 +840,9 @@
         </div>
       </div>
 
-      <div class="chart-card">
+      <div class="chart-card chart-card-red">
         <div class="chart-header">
-          <span class="chart-title">Error Rate History</span>
+          <span class="chart-title"><span class="chart-dot" style="background:#ef4444;box-shadow:0 0 6px #ef4444"></span>Error Rate History</span>
           <div><span class="chart-current" id="herr-val">—</span><span class="chart-unit">%</span></div>
         </div>
         <div class="chart-body">
@@ -666,9 +860,9 @@
         </div>
       </div>
 
-      <div class="chart-card">
+      <div class="chart-card chart-card-amber">
         <div class="chart-header">
-          <span class="chart-title">Response Time History</span>
+          <span class="chart-title"><span class="chart-dot" style="background:#f59e0b;box-shadow:0 0 6px #f59e0b"></span>Response Time History</span>
           <div><span class="chart-current" id="hresp-val">—</span><span class="chart-unit">ms</span></div>
         </div>
         <div class="chart-body">
@@ -695,13 +889,15 @@
 
     <!-- ERROR RATE + AVG RESPONSE -->
     <div class="grid-2">
-      <div class="card colored-stat">
+      <div class="card colored-stat cs-err">
+        <svg class="colored-stat-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <div>
           <span class="colored-num c-green" id="error-rate-val">—</span><span class="colored-unit">%</span>
         </div>
         <div class="colored-lbl">Error Rate (4xx / 5xx)</div>
       </div>
-      <div class="card colored-stat">
+      <div class="card colored-stat cs-resp">
+        <svg class="colored-stat-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         <div>
           <span class="colored-num c-green" id="avg-response-val">—</span><span class="colored-unit">ms</span>
         </div>
@@ -712,7 +908,10 @@
     <!-- REQUEST RATE SPARKLINE -->
     <div class="sparkline-card">
       <div class="panel-header">
-        <span class="section-title">Request Rate</span>
+        <span class="section-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Request Rate
+        </span>
         <span class="section-badge" id="req-rate-badge">0 req/5s</span>
       </div>
       <div class="sparkline-body">
@@ -743,7 +942,10 @@
 
       <div class="panel-card">
         <div class="panel-header">
-          <span class="section-title">Top Endpoints</span>
+          <span class="section-title">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Top Endpoints
+          </span>
           <span class="section-badge">Last 200 reqs</span>
         </div>
         <div id="endpoints-list">
@@ -753,7 +955,10 @@
 
       <div class="panel-card">
         <div class="panel-header">
-          <span class="section-title">Active URLs</span>
+          <span class="section-title">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            Active URLs
+          </span>
           <span class="section-badge">Most Recent</span>
         </div>
         <div id="active-urls-list">
@@ -766,8 +971,13 @@
     <!-- LIVE LOG FEED -->
     <div id="log-feed">
       <div class="panel-header">
-        <span class="section-title">Live Log Feed</span>
-        <span class="section-badge">● Live</span>
+        <span class="section-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          Live Log Feed
+        </span>
+        <span class="section-badge" style="color:var(--green);border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.08)">
+          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;margin-right:5px;vertical-align:middle"></span>Live
+        </span>
       </div>
       <div id="log-list">
         <div class="empty-state">Loading logs…</div>
@@ -777,7 +987,10 @@
     <!-- EVENTS TABLE -->
     <div id="events-section">
       <div class="panel-header">
-        <span class="section-title">Recent Events</span>
+        <span class="section-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Recent Events
+        </span>
         <span class="section-badge">Last 10</span>
       </div>
       <table>
@@ -1085,7 +1298,7 @@
             const status = e.status ?? "";
             const dur    = e.duration_ms != null ? e.duration_ms + "ms" : "";
             const stCls  = status ? statusClass(status) : "";
-            return `<div class="log-entry">
+            return `<div class="log-entry log-new" data-level="${lvl}">
               <span class="log-time">${time}</span>
               <span class="log-level level-${lvl}">${lvl}</span>
               <span class="log-method">${method}</span>
@@ -1122,16 +1335,26 @@
           endList.innerHTML = '<div class="empty-state">No requests yet.</div>';
         } else {
           const maxC = topEndpoints[0][1];
-          endList.innerHTML = topEndpoints.map(([path, count], i) => `
-            <div class="endpoint-row">
-              <span class="endpoint-rank">${i + 1}</span>
-              <span class="endpoint-path">${path}</span>
-              <div class="endpoint-bar-wrap">
-                <div class="endpoint-bar" style="width:${(count / maxC * 100).toFixed(0)}%"></div>
+          endList.innerHTML = topEndpoints.map(([path, count], i) => {
+            const pct = (count / maxC * 100).toFixed(1);
+            const rankCls = i === 0 ? "rank-1" : i === 1 ? "rank-2" : i === 2 ? "rank-3" : "rank-other";
+            const barColor = i === 0
+              ? "linear-gradient(90deg,#f59e0b,#fcd34d)"
+              : i === 1
+              ? "linear-gradient(90deg,#94a3b8,#cbd5e1)"
+              : "linear-gradient(90deg,#3b82f6,#38bdf8)";
+            return `<div class="endpoint-row">
+              <div class="endpoint-fill" style="width:${pct}%"></div>
+              <div class="endpoint-top">
+                <span class="endpoint-rank ${rankCls}">${i + 1}</span>
+                <span class="endpoint-path">${path}</span>
+                <span class="endpoint-count">${count}</span>
               </div>
-              <span class="endpoint-count">${count}</span>
-            </div>
-          `).join("");
+              <div class="endpoint-bar-track">
+                <div class="endpoint-bar-fill" style="width:${pct}%;background:${barColor}"></div>
+              </div>
+            </div>`;
+          }).join("");
         }
 
       } catch (e) { console.warn("logs error", e); }
@@ -1163,8 +1386,11 @@
         urlContainer.innerHTML = sorted.map(u => `
           <div class="url-row">
             <span class="url-code">${u.short_code || "—"}</span>
-            <span class="url-original">${truncate(u.original_url, 30)}</span>
-            <span class="${u.is_active ? 'url-active' : 'url-inactive'}">${u.is_active ? '● on' : '○ off'}</span>
+            <span class="url-original">${truncate(u.original_url, 32)}</span>
+            <span class="url-status">
+              <span class="url-dot ${u.is_active ? 'on' : 'off'}"></span>
+              <span class="${u.is_active ? 'url-on-lbl' : 'url-off-lbl'}">${u.is_active ? 'active' : 'off'}</span>
+            </span>
           </div>
         `).join("");
       }
@@ -1184,7 +1410,8 @@
         const urlId = ev.url_id ?? ev.url ?? "—";
         const uid   = ev.user_id ?? ev.user ?? "—";
         const ts    = ev.timestamp ? fmtTime(ev.timestamp) : "—";
-        return `<tr>
+        const evRowCls = eventClass(type).replace('event-','ev-');
+        return `<tr class="${evRowCls}">
           <td><span class="event-type ${eventClass(type)}">${type}</span></td>
           <td>${urlId}</td><td>${uid}</td><td>${ts}</td>
         </tr>`;
