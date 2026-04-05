@@ -115,7 +115,11 @@
     }
 
     /* ── METRIC RING CARD ── */
-    .metric-card { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 26px 20px 20px; }
+    .metric-card {
+      display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 26px 20px 20px;
+      transition: transform 0.2s ease, box-shadow 0.5s ease, border-color 0.5s ease;
+    }
+    .metric-card:hover { transform: translateY(-3px); }
     .ring-wrap   { position: relative; width: 120px; height: 120px; flex-shrink: 0; }
     .ring-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
     .ring-bg     { fill: none; stroke: var(--border2); stroke-width: 9; }
@@ -133,6 +137,8 @@
     .ring-unit { font-size: 12px; color: var(--muted); margin-top: 3px; }
     .metric-label { font-size: 13px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); text-align: center; }
     .metric-sub   { font-size: 12px; color: var(--muted); text-align: center; margin-top: -8px; }
+    @keyframes ring-danger { 0%,100%{ opacity:1; } 50%{ opacity:0.55; } }
+    .ring-danger { animation: ring-danger 1.4s ease-in-out infinite; }
 
     /* ── STAT CARD (icon) ── */
     .stat-card { display: flex; align-items: center; gap: 18px; }
@@ -318,6 +324,16 @@
 </head>
 <body>
 
+  <!-- shared SVG filters -->
+  <svg width="0" height="0" style="position:absolute;overflow:hidden">
+    <defs>
+      <filter id="ring-glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="3.5" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+  </svg>
+
   <header>
     <div class="header-left">
       <div class="logo-icon">🛡</div>
@@ -352,11 +368,19 @@
 
     <!-- METRIC RINGS -->
     <div class="grid-4">
-      <div class="card metric-card">
+      <div class="card metric-card" id="card-cpu">
         <div class="ring-wrap">
           <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <g fill="#243350" opacity="0.7">
+              <circle cx="116" cy="60" r="1.8"/><circle cx="116" cy="60" r="1.8" transform="rotate(30 60 60)"/>
+              <circle cx="116" cy="60" r="1.8" transform="rotate(60 60 60)"/><circle cx="116" cy="60" r="1.8" transform="rotate(90 60 60)"/>
+              <circle cx="116" cy="60" r="1.8" transform="rotate(120 60 60)"/><circle cx="116" cy="60" r="1.8" transform="rotate(150 60 60)"/>
+              <circle cx="116" cy="60" r="1.8" transform="rotate(180 60 60)"/><circle cx="116" cy="60" r="1.8" transform="rotate(210 60 60)"/>
+              <circle cx="116" cy="60" r="1.8" transform="rotate(240 60 60)"/><circle cx="116" cy="60" r="1.8" transform="rotate(270 60 60)"/>
+              <circle cx="116" cy="60" r="1.8" transform="rotate(300 60 60)"/><circle cx="116" cy="60" r="1.8" transform="rotate(330 60 60)"/>
+            </g>
             <circle class="ring-bg"   cx="60" cy="60" r="48"/>
-            <circle class="ring-fill" cx="60" cy="60" r="48" id="cpu-ring" stroke="var(--blue)"/>
+            <circle class="ring-fill" cx="60" cy="60" r="48" id="cpu-ring" stroke="var(--blue)" filter="url(#ring-glow)"/>
           </svg>
           <div class="ring-center">
             <div class="ring-val" id="cpu-val">—</div>
@@ -367,11 +391,19 @@
         <div class="metric-sub">System</div>
       </div>
 
-      <div class="card metric-card">
+      <div class="card metric-card" id="card-ram">
         <div class="ring-wrap">
           <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <g fill="#243350" opacity="0.7">
+              <circle cx="116" cy="60" r="1.8"/><circle cx="116" cy="60" r="1.8" transform="rotate(30 60 60)"/>
+              <circle cx="116" cy="60" r="1.8" transform="rotate(60 60 60)"/><circle cx="116" cy="60" r="1.8" transform="rotate(90 60 60)"/>
+              <circle cx="116" cy="60" r="1.8" transform="rotate(120 60 60)"/><circle cx="116" cy="60" r="1.8" transform="rotate(150 60 60)"/>
+              <circle cx="116" cy="60" r="1.8" transform="rotate(180 60 60)"/><circle cx="116" cy="60" r="1.8" transform="rotate(210 60 60)"/>
+              <circle cx="116" cy="60" r="1.8" transform="rotate(240 60 60)"/><circle cx="116" cy="60" r="1.8" transform="rotate(270 60 60)"/>
+              <circle cx="116" cy="60" r="1.8" transform="rotate(300 60 60)"/><circle cx="116" cy="60" r="1.8" transform="rotate(330 60 60)"/>
+            </g>
             <circle class="ring-bg"   cx="60" cy="60" r="48"/>
-            <circle class="ring-fill" cx="60" cy="60" r="48" id="ram-ring" stroke="var(--green)"/>
+            <circle class="ring-fill" cx="60" cy="60" r="48" id="ram-ring" stroke="var(--green)" filter="url(#ring-glow)"/>
           </svg>
           <div class="ring-center">
             <div class="ring-val" id="ram-pct">—</div>
@@ -382,11 +414,19 @@
         <div class="metric-sub" id="ram-val">— / — MB</div>
       </div>
 
-      <div class="card metric-card">
+      <div class="card metric-card" id="card-proc-cpu">
         <div class="ring-wrap">
           <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <g fill="#243350" opacity="0.7">
+              <circle cx="116" cy="60" r="1.8"/><circle cx="116" cy="60" r="1.8" transform="rotate(30 60 60)"/>
+              <circle cx="116" cy="60" r="1.8" transform="rotate(60 60 60)"/><circle cx="116" cy="60" r="1.8" transform="rotate(90 60 60)"/>
+              <circle cx="116" cy="60" r="1.8" transform="rotate(120 60 60)"/><circle cx="116" cy="60" r="1.8" transform="rotate(150 60 60)"/>
+              <circle cx="116" cy="60" r="1.8" transform="rotate(180 60 60)"/><circle cx="116" cy="60" r="1.8" transform="rotate(210 60 60)"/>
+              <circle cx="116" cy="60" r="1.8" transform="rotate(240 60 60)"/><circle cx="116" cy="60" r="1.8" transform="rotate(270 60 60)"/>
+              <circle cx="116" cy="60" r="1.8" transform="rotate(300 60 60)"/><circle cx="116" cy="60" r="1.8" transform="rotate(330 60 60)"/>
+            </g>
             <circle class="ring-bg"   cx="60" cy="60" r="48"/>
-            <circle class="ring-fill" cx="60" cy="60" r="48" id="proc-cpu-ring" stroke="var(--yellow)"/>
+            <circle class="ring-fill" cx="60" cy="60" r="48" id="proc-cpu-ring" stroke="var(--yellow)" filter="url(#ring-glow)"/>
           </svg>
           <div class="ring-center">
             <div class="ring-val" id="proc-cpu-val">—</div>
@@ -397,11 +437,19 @@
         <div class="metric-sub" id="proc-threads">— threads</div>
       </div>
 
-      <div class="card metric-card">
+      <div class="card metric-card" id="card-proc-mem">
         <div class="ring-wrap">
           <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <g fill="#243350" opacity="0.7">
+              <circle cx="116" cy="60" r="1.8"/><circle cx="116" cy="60" r="1.8" transform="rotate(30 60 60)"/>
+              <circle cx="116" cy="60" r="1.8" transform="rotate(60 60 60)"/><circle cx="116" cy="60" r="1.8" transform="rotate(90 60 60)"/>
+              <circle cx="116" cy="60" r="1.8" transform="rotate(120 60 60)"/><circle cx="116" cy="60" r="1.8" transform="rotate(150 60 60)"/>
+              <circle cx="116" cy="60" r="1.8" transform="rotate(180 60 60)"/><circle cx="116" cy="60" r="1.8" transform="rotate(210 60 60)"/>
+              <circle cx="116" cy="60" r="1.8" transform="rotate(240 60 60)"/><circle cx="116" cy="60" r="1.8" transform="rotate(270 60 60)"/>
+              <circle cx="116" cy="60" r="1.8" transform="rotate(300 60 60)"/><circle cx="116" cy="60" r="1.8" transform="rotate(330 60 60)"/>
+            </g>
             <circle class="ring-bg"   cx="60" cy="60" r="48"/>
-            <circle class="ring-fill" cx="60" cy="60" r="48" id="proc-mem-ring" stroke="var(--blue)"/>
+            <circle class="ring-fill" cx="60" cy="60" r="48" id="proc-mem-ring" stroke="var(--blue)" filter="url(#ring-glow)"/>
           </svg>
           <div class="ring-center">
             <div class="ring-val" id="proc-mem-val">—</div>
@@ -416,21 +464,34 @@
     <!-- STATS ROW -->
     <div class="grid-3">
       <div class="card stat-card">
-        <div class="stat-icon icon-blue">👤</div>
+        <div class="stat-icon icon-blue">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          </svg>
+        </div>
         <div class="stat-info">
           <div class="stat-num" id="user-count">—</div>
           <div class="stat-lbl">Total Users</div>
         </div>
       </div>
       <div class="card stat-card">
-        <div class="stat-icon icon-green">🔗</div>
+        <div class="stat-icon icon-green">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+          </svg>
+        </div>
         <div class="stat-info">
           <div class="stat-num" id="url-count">—</div>
           <div class="stat-lbl">Short URLs</div>
         </div>
       </div>
       <div class="card stat-card">
-        <div class="stat-icon icon-purple">⚡</div>
+        <div class="stat-icon icon-purple">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+        </div>
         <div class="stat-info">
           <div class="stat-num" id="event-count">—</div>
           <div class="stat-lbl">Recent Events</div>
@@ -704,7 +765,25 @@
       if (!el) return;
       const clamped = Math.min(Math.max(pct, 0), 100);
       el.style.strokeDashoffset = CIRCUMFERENCE * (1 - clamped / 100);
-      el.style.stroke = clamped < 50 ? "var(--green)" : clamped < 75 ? "var(--yellow)" : "var(--red)";
+
+      const isWarn   = clamped >= 50 && clamped < 75;
+      const isDanger = clamped >= 75;
+      el.style.stroke = isDanger ? "var(--red)" : isWarn ? "var(--yellow)" : "var(--green)";
+
+      // Danger pulse on the arc
+      isDanger ? el.classList.add("ring-danger") : el.classList.remove("ring-danger");
+
+      // Card border + shadow glow matching the arc color
+      const card = el.closest(".metric-card");
+      if (card) {
+        const [glowRgb, borderRgb] = isDanger
+          ? ["239,68,68",    "239,68,68"]
+          : isWarn
+          ? ["245,158,11",   "245,158,11"]
+          : ["16,185,129",   "16,185,129"];
+        card.style.boxShadow  = `0 0 22px rgba(${glowRgb},0.22), 0 4px 20px rgba(0,0,0,0.35)`;
+        card.style.borderColor = `rgba(${borderRgb},0.45)`;
+      }
     }
 
     function statusClass(code) {
