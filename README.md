@@ -18,7 +18,7 @@ Watchtower runs as **two independent processes** — so the monitoring plane sur
 │                              │     │                                     │
 │  URL Shortener API           │◄────│  Health checks (every 15s)          │
 │  /shorten, /urls, /<code>    │     │  Error rate detection               │
-│                              │     │  SLO burn rate analysis              │
+│                              │     │  SLO burn rate analysis             │
 │  Observability API           │     │  Self-healing (auto-restart)        │
 │  /health, /metrics, /logs    │     │                                     │
 │  /slo, /incidents            │     │  Serves UI (survives app crash):    │
@@ -28,10 +28,10 @@ Watchtower runs as **two independent processes** — so the monitoring plane sur
 │  /chaos/*                    │     │                                     │
 │                              │     │  Discord Alert Dispatch             │
 └──────────────────────────────┘     └─────────────────────────────────────┘
-          ▲                                        │
-          │              ┌───────────┐             │
+          ▲                                         │
+          │              ┌────────────┐             │
           └──────────────│ PostgreSQL │◄────────────┘
-                         └───────────┘
+                         └────────────┘
 ```
 
 ---
