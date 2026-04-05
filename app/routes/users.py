@@ -6,6 +6,8 @@ from flask import Blueprint, jsonify, request
 from peewee import IntegrityError
 
 from app.models.user import User
+from app.models.url import Url
+from app.models.event import Event
 
 users_bp = Blueprint("users", __name__, url_prefix="/users")
 
@@ -17,10 +19,18 @@ def list_users():
     page = request.args.get("page", None, type=int)
     per_page = request.args.get("per_page", 25, type=int)
 
+    query = User.select().order_by(User.id)
+
+    username = request.args.get("username")
+    if username:
+        query = query.where(User.username == username)
+
+    email = request.args.get("email")
+    if email:
+        query = query.where(User.email == email)
+
     if page is not None:
-        query = User.select().order_by(User.id).paginate(page, per_page)
-    else:
-        query = User.select().order_by(User.id)
+        query = query.paginate(page, per_page)
 
     return jsonify([
         {
@@ -160,3 +170,29 @@ def delete_user(user_id):
         return jsonify({"error": "User not found"}), 404
     user.delete_instance(recursive=True)
     return jsonify({"message": "User deleted"}), 200
+
+
+@users_bp.route("/<int:user_id>/urls", methods=["GET"])
+def get_user_urls(user_id):
+    user = User.get_or_none(User.id == user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    urls = Url.select().where(Url.user == user_id).order_by(Url.id)
+    results = []
+    for u in urls:
+        clicks = Event.select().where(
+            (Event.url == u.id) & (Event.event_type == "click")
+        ).count()
+        results.append({
+            "id": u.id,
+            "user_id": u.user_id,
+            "short_code": u.short_code,
+            "original_url": u.original_url,
+            "title": u.title,
+            "is_active": u.is_active,
+            "clicks": clicks,
+            "created_at": u.created_at.isoformat() if u.created_at else None,
+            "updated_at": u.updated_at.isoformat() if u.updated_at else None,
+        })
+    return jsonify(results)

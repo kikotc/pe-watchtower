@@ -24,6 +24,13 @@ def init_db(app):
     from app.models import User, Url, Event, Incident
     with database:
         database.create_tables([User, Url, Event, Incident], safe=True)
+        # Ensure url_id column on events allows NULL (migration for existing DBs)
+        try:
+            database.execute_sql(
+                "ALTER TABLE events ALTER COLUMN url_id DROP NOT NULL"
+            )
+        except Exception:
+            pass
 
     @app.before_request
     def _db_connect():

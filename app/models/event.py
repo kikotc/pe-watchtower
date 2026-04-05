@@ -7,7 +7,7 @@ from app.models.user import User
 
 class Event(BaseModel):
     id = AutoField()
-    url = ForeignKeyField(Url, backref="events", on_delete="CASCADE")
+    url = ForeignKeyField(Url, backref="events", on_delete="CASCADE", null=True)
     user = ForeignKeyField(User, backref="events", on_delete="CASCADE", null=True)
     event_type = CharField()
     timestamp = DateTimeField()
