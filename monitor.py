@@ -20,6 +20,22 @@ ERROR_RATE_WINDOW = 120
 BASE_URL = "http://localhost:5001"
 
 _last_alert: dict[str, float] = {}
+_down_since: float | None = None  # timestamp when service went down
+_INCIDENTS_URL = f"http://localhost:5001/incidents/record"
+
+
+def _record_incident(incident_type: str, started_at: str, resolved_at: str | None = None,
+                     duration_seconds: float | None = None, details: str = "") -> None:
+    try:
+        requests.post(_INCIDENTS_URL, json={
+            "type": incident_type,
+            "started_at": started_at,
+            "resolved_at": resolved_at,
+            "duration_seconds": duration_seconds,
+            "details": details,
+        }, timeout=5)
+    except Exception as exc:
+        logger.warning("Could not record incident to DB: %s", exc)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -63,15 +79,44 @@ def should_alert(key: str) -> bool:
 
 
 def check_service_down() -> None:
+    global _down_since
     health_url = f"{BASE_URL}/health"
     try:
         resp = requests.get(health_url, timeout=5)
-        if resp.status_code == 200:
-            _last_alert.pop("service_down", None)
-            return
+        is_up = resp.status_code == 200
+    except Exception:
+        is_up = False
+        status = "Connection refused"
+    else:
         status = resp.status_code
-    except Exception as exc:
-        status = str(exc)
+
+    if is_up:
+        if _down_since is not None:
+            # Service just recovered — send recovery alert
+            duration = int(time.time() - _down_since)
+            mins, secs = divmod(duration, 60)
+            duration_str = f"{mins}m {secs}s" if mins else f"{secs}s"
+            down_ts = datetime.fromtimestamp(_down_since, tz=timezone.utc).isoformat()
+            recovered_ts = datetime.now(timezone.utc).isoformat()
+            _record_incident("service_down", down_ts, recovered_ts, float(duration))
+            send_discord({
+                "title": "✅  Service Recovered",
+                "description": "The service is back online.",
+                "color": 0x2ECC71,  # green
+                "fields": [
+                    {"name": "Endpoint", "value": f"`{health_url}`", "inline": True},
+                    {"name": "Was down for", "value": f"`{duration_str}`", "inline": True},
+                ],
+                "footer": {"text": "Watchtower Alerting"},
+                "timestamp": recovered_ts,
+            })
+            logger.info("Alert fired: service_recovered — was down %ss", duration)
+            _down_since = None
+        _last_alert.pop("service_down", None)
+        return
+
+    if _down_since is None:
+        _down_since = time.time()
 
     if should_alert("service_down"):
         send_discord({

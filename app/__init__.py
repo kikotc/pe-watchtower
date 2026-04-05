@@ -1,5 +1,6 @@
 import logging
 import time
+import uuid
 
 from dotenv import load_dotenv
 from flask import Flask, g, jsonify, request
@@ -25,6 +26,7 @@ def create_app():
     @app.before_request
     def _start_timer():
         g.start_time = time.monotonic()
+        g.request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex[:12]
 
     @app.after_request
     def _log_request(response):
@@ -38,17 +40,26 @@ def create_app():
             getattr(logging, level),
             "request",
             extra={
+                "request_id": g.request_id,
                 "method": request.method,
                 "path": request.path,
                 "status": response.status_code,
                 "duration_ms": duration_ms,
             },
         )
+        response.headers["X-Request-ID"] = g.request_id
         return response
 
     @app.route("/health")
     def health():
-        return jsonify(status="ok")
+        try:
+            from app.database import db
+            db.execute_sql("SELECT 1")
+            db_status = "ok"
+        except Exception as e:
+            logger.error("Health check: DB unreachable", exc_info=e)
+            return jsonify(status="degraded", database="unreachable"), 503
+        return jsonify(status="ok", database=db_status)
 
     logger.info("App started")
 
