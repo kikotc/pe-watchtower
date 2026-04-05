@@ -237,6 +237,34 @@
     .event-other   { color: var(--muted);  background: rgba(100,116,139,0.1); }
 
     .empty-state { text-align: center; padding: 32px; color: var(--muted); font-size: 13px; }
+
+    /* ── HISTORY CHARTS ── */
+    .chart-card    { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .chart-header  { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px 8px; }
+    .chart-title   { font-size: 12px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); }
+    .chart-current { font-size: 20px; font-weight: 700; color: #f1f5f9; }
+    .chart-unit    { font-size: 13px; color: var(--muted); margin-left: 2px; }
+    .chart-svg     { width: 100%; height: 80px; display: block; }
+    .chart-axis    { display: flex; justify-content: space-between; padding: 4px 18px 12px; font-size: 11px; color: var(--muted); }
+
+    /* ── CHART Y-AXIS ── */
+    .chart-body  { display: flex; align-items: stretch; }
+    .y-axis      { display: flex; flex-direction: column; justify-content: space-between; padding: 8px 5px 8px 16px; font-size: 10px; color: var(--muted); text-align: right; min-width: 34px; font-family: "SF Mono","Fira Code",monospace; flex-shrink: 0; }
+    .chart-right { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .chart-right .chart-svg  { flex: 1; }
+    .chart-right .chart-axis { padding-left: 4px; }
+
+    /* ── TIME RANGE SELECTOR ── */
+    .hist-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .time-btns   { display: flex; gap: 6px; }
+    .time-btn {
+      background: var(--surface); border: 1px solid var(--border2);
+      color: var(--muted); border-radius: 6px; padding: 5px 13px;
+      font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+    .time-btn:hover  { color: var(--text); border-color: var(--faint); }
+    .time-btn.active { color: var(--blue); border-color: var(--blue); background: rgba(59,130,246,0.1); }
   </style>
 </head>
 <body>
@@ -349,6 +377,106 @@
         </div>
       </div>
     </div>
+
+    <!-- HISTORICAL GRAPHS -->
+    <div>
+      <div class="hist-header">
+        <span class="section-title">Historical Metrics</span>
+        <div class="time-btns">
+          <button class="time-btn active" data-pts="60">5m</button>
+          <button class="time-btn" data-pts="180">15m</button>
+          <button class="time-btn" data-pts="360">30m</button>
+          <button class="time-btn" data-pts="720">1h</button>
+        </div>
+      </div>
+    <div class="grid-2">
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <span class="chart-title">CPU History</span>
+          <div><span class="chart-current" id="hcpu-val">—</span><span class="chart-unit">%</span></div>
+        </div>
+        <div class="chart-body">
+          <div class="y-axis"><span>100</span><span>50</span><span>0</span></div>
+          <div class="chart-right">
+            <svg class="chart-svg" viewBox="0 0 300 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+              <defs><linearGradient id="g-cpu" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3b82f6" stop-opacity="0.35"/><stop offset="100%" stop-color="#3b82f6" stop-opacity="0.02"/></linearGradient></defs>
+              <line x1="0" y1="27" x2="300" y2="27" stroke="#1e2d4a" stroke-width="0.5"/>
+              <line x1="0" y1="53" x2="300" y2="53" stroke="#1e2d4a" stroke-width="0.5"/>
+              <path id="area-cpu" fill="url(#g-cpu)"/>
+              <polyline id="line-cpu" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+            </svg>
+            <div class="chart-axis"><span>5m ago</span><span>now</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <span class="chart-title">RAM History</span>
+          <div><span class="chart-current" id="hram-val">—</span><span class="chart-unit">%</span></div>
+        </div>
+        <div class="chart-body">
+          <div class="y-axis"><span>100</span><span>50</span><span>0</span></div>
+          <div class="chart-right">
+            <svg class="chart-svg" viewBox="0 0 300 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+              <defs><linearGradient id="g-ram" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#10b981" stop-opacity="0.35"/><stop offset="100%" stop-color="#10b981" stop-opacity="0.02"/></linearGradient></defs>
+              <line x1="0" y1="27" x2="300" y2="27" stroke="#1e2d4a" stroke-width="0.5"/>
+              <line x1="0" y1="53" x2="300" y2="53" stroke="#1e2d4a" stroke-width="0.5"/>
+              <path id="area-ram" fill="url(#g-ram)"/>
+              <polyline id="line-ram" fill="none" stroke="#10b981" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+            </svg>
+            <div class="chart-axis"><span>5m ago</span><span>now</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <span class="chart-title">Error Rate History</span>
+          <div><span class="chart-current" id="herr-val">—</span><span class="chart-unit">%</span></div>
+        </div>
+        <div class="chart-body">
+          <div class="y-axis"><span>100%</span><span>50%</span><span>0%</span></div>
+          <div class="chart-right">
+            <svg class="chart-svg" viewBox="0 0 300 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+              <defs><linearGradient id="g-err" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ef4444" stop-opacity="0.35"/><stop offset="100%" stop-color="#ef4444" stop-opacity="0.02"/></linearGradient></defs>
+              <line x1="0" y1="27" x2="300" y2="27" stroke="#1e2d4a" stroke-width="0.5"/>
+              <line x1="0" y1="53" x2="300" y2="53" stroke="#1e2d4a" stroke-width="0.5"/>
+              <path id="area-err" fill="url(#g-err)"/>
+              <polyline id="line-err" fill="none" stroke="#ef4444" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+            </svg>
+            <div class="chart-axis"><span>5m ago</span><span>now</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <span class="chart-title">Response Time History</span>
+          <div><span class="chart-current" id="hresp-val">—</span><span class="chart-unit">ms</span></div>
+        </div>
+        <div class="chart-body">
+          <div class="y-axis">
+            <span id="resp-ymax">—</span>
+            <span id="resp-ymid">—</span>
+            <span>0ms</span>
+          </div>
+          <div class="chart-right">
+            <svg class="chart-svg" viewBox="0 0 300 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+              <defs><linearGradient id="g-resp" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f59e0b" stop-opacity="0.35"/><stop offset="100%" stop-color="#f59e0b" stop-opacity="0.02"/></linearGradient></defs>
+              <line x1="0" y1="27" x2="300" y2="27" stroke="#1e2d4a" stroke-width="0.5"/>
+              <line x1="0" y1="53" x2="300" y2="53" stroke="#1e2d4a" stroke-width="0.5"/>
+              <path id="area-resp" fill="url(#g-resp)"/>
+              <polyline id="line-resp" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+            </svg>
+            <div class="chart-axis"><span>5m ago</span><span>now</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    </div><!-- end hist wrapper -->
 
     <!-- ERROR RATE + AVG RESPONSE -->
     <div class="grid-2">
@@ -489,6 +617,89 @@
       return "event-other";
     }
 
+    // ── history ───────────────────────────────────────────────────────────────
+    const HIST_MAX = 720; // 1 hour at 5s intervals
+    const hist = { cpu: [], ram: [], errorRate: [], responseTime: [] };
+
+    function pushHist(key, val) {
+      hist[key].push(val);
+      if (hist[key].length > HIST_MAX) hist[key].shift();
+    }
+
+    function drawChart(lineId, areaId, data, fixedMax) {
+      const valid = data.map((v, i) => v != null ? { v, i } : null).filter(Boolean);
+      if (!valid.length) return;
+      const W = 300, H = 80, PT = 8, PB = 8;
+      const usable = H - PT - PB;
+      const max    = fixedMax || Math.max(...valid.map(p => p.v), 1);
+      const n      = data.length;
+      const step   = n > 1 ? W / (n - 1) : W;
+      const pts    = valid.map(({ v, i }) => ({ x: i * step, y: PT + (1 - v / max) * usable }));
+      const lineStr = pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+      const areaStr = `M${pts[0].x.toFixed(1)},${H} ` +
+        pts.map(p => `L${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ") +
+        ` L${pts[pts.length - 1].x.toFixed(1)},${H} Z`;
+      document.getElementById(lineId).setAttribute("points", lineStr);
+      document.getElementById(areaId).setAttribute("d", areaStr);
+    }
+
+    // ── seed history from log file ────────────────────────────────────────────
+    async function initFromHistory() {
+      const entries = await safeFetch("/dashboard/history");
+      if (!entries || !entries.length) return;
+
+      const now      = Date.now();
+      const BUCKET_MS = 5000; // match polling interval
+
+      const errB  = Array.from({ length: HIST_MAX }, () => ({ total: 0, errors: 0 }));
+      const respB = Array.from({ length: HIST_MAX }, () => ({ total: 0, sum: 0 }));
+
+      entries.forEach(e => {
+        if (!e.method || !e.timestamp) return;
+        const age = now - new Date(e.timestamp).getTime();
+        const idx = HIST_MAX - 1 - Math.floor(age / BUCKET_MS);
+        if (idx < 0 || idx >= HIST_MAX) return;
+        errB[idx].total++;
+        if (e.status >= 400) errB[idx].errors++;
+        if (e.duration_ms != null) { respB[idx].total++; respB[idx].sum += e.duration_ms; }
+      });
+
+      hist.errorRate    = errB.map(b  => b.total  > 0 ? b.errors / b.total * 100 : null);
+      hist.responseTime = respB.map(b => b.total  > 0 ? b.sum    / b.total       : null);
+      redrawCharts();
+    }
+
+    // ── time range selector ───────────────────────────────────────────────────
+    let viewPts = 60;
+
+    function getSlice(arr) { return arr.slice(-viewPts); }
+
+    function redrawCharts() {
+      drawChart("line-cpu",  "area-cpu",  getSlice(hist.cpu),       100);
+      drawChart("line-ram",  "area-ram",  getSlice(hist.ram),       100);
+      drawChart("line-err",  "area-err",  getSlice(hist.errorRate), 100);
+
+      const respSlice = getSlice(hist.responseTime);
+      const validResp = respSlice.filter(v => v != null);
+      const respMax   = validResp.length ? Math.ceil(Math.max(...validResp) / 10) * 10 : null;
+      if (respMax) {
+        document.getElementById("resp-ymax").textContent = respMax + "ms";
+        document.getElementById("resp-ymid").textContent = Math.round(respMax / 2) + "ms";
+      }
+      drawChart("line-resp", "area-resp", respSlice, respMax);
+    }
+
+    document.querySelectorAll(".time-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        viewPts = parseInt(btn.dataset.pts);
+        document.querySelectorAll(".time-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        const label = btn.textContent;
+        document.querySelectorAll(".chart-axis span:first-child").forEach(el => el.textContent = label + " ago");
+        redrawCharts();
+      });
+    });
+
     // ── safe fetch ────────────────────────────────────────────────────────────
 
     async function safeFetch(url) {
@@ -530,11 +741,17 @@
         const cpu = data.cpu_percent ?? 0;
         document.getElementById("cpu-val").textContent = cpu.toFixed(1);
         setRing("cpu-ring", cpu);
+        pushHist("cpu", cpu);
+        document.getElementById("hcpu-val").textContent = cpu.toFixed(1);
+        drawChart("line-cpu", "area-cpu", getSlice(hist.cpu), 100);
 
         const ramUsed = data.memory?.used_mb ?? 0, ramTotal = data.memory?.total_mb ?? 1, ramPct = data.memory?.percent ?? 0;
         document.getElementById("ram-pct").textContent = ramPct.toFixed(1);
         document.getElementById("ram-val").textContent = `${Math.round(ramUsed)} / ${Math.round(ramTotal)} MB`;
         setRing("ram-ring", ramPct);
+        pushHist("ram", ramPct);
+        document.getElementById("hram-val").textContent = ramPct.toFixed(1);
+        drawChart("line-ram", "area-ram", getSlice(hist.ram), 100);
 
         const pCpu = data.process?.cpu_percent ?? 0;
         document.getElementById("proc-cpu-val").textContent = pCpu.toFixed(1);
@@ -643,6 +860,14 @@
         respEl.textContent = Math.round(avgDuration);
         respEl.className   = "colored-num " + colorClass(avgDuration, 200, 500);
 
+        pushHist("errorRate", errorRate);
+        document.getElementById("herr-val").textContent = errorRate.toFixed(1);
+        drawChart("line-err", "area-err", getSlice(hist.errorRate), 100);
+
+        pushHist("responseTime", avgDuration);
+        document.getElementById("hresp-val").textContent = Math.round(avgDuration);
+        drawChart("line-resp", "area-resp", getSlice(hist.responseTime), null);
+
         drawSparkline(computeSparkline(logs));
 
         const endList = document.getElementById("endpoints-list");
@@ -733,6 +958,7 @@
 
     fastPoll();
     pollAppData();
+    initFromHistory();
     setInterval(fastPoll,    5000);
     setInterval(pollAppData, 15000);
   </script>
