@@ -1,43 +1,97 @@
-# MLH PE Hackathon — Flask + Peewee + PostgreSQL Template
+# Watchtower
 
-A minimal hackathon starter template. You get the scaffolding and database wiring — you build the models, routes, and CSV loading logic.
+A production-grade observability and incident response platform built on top of a URL shortener service. Watchtower monitors your application in real-time, fires intelligent alerts, injects chaos to prove resilience, and automatically heals itself when things go wrong.
 
-**Stack:** Flask · Peewee ORM · PostgreSQL · uv
+**Built for the MLH Production Engineering Hackathon — Incident Response Quest Track.**
 
-## **Important**
+**Stack:** Flask, Peewee ORM, PostgreSQL, Discord Webhooks, psutil
 
-You need to work with around the seed files that you can find in [MLH PE Hackathon](https://mlh-pe-hackathon.com) platform. This will help you build the schema for the database and have some data to do some testing and submit your project for judging. If you need help with this, reach out on Discord or on the Q&A tab on the platform.
+---
 
-## Prerequisites
+## Architecture
 
-- **uv** — a fast Python package manager that handles Python versions, virtual environments, and dependencies automatically.
-  Install it with:
-  ```bash
-  # macOS / Linux
-  curl -LsSf https://astral.sh/uv/install.sh | sh
+Watchtower runs as **two independent processes** — so the monitoring plane survives even if the application crashes.
 
-  # Windows (PowerShell)
-  powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-  ```
-  For other methods see the [uv installation docs](https://docs.astral.sh/uv/getting-started/installation/).
-- PostgreSQL running locally (you can use Docker or a local instance)
+```
+┌──────────────────────────────┐     ┌─────────────────────────────────────┐
+│   Flask App (port 5001)      │     │   Monitor Process (port 5002)       │
+│                              │     │                                     │
+│  URL Shortener API           │◄────│  Health checks (every 15s)          │
+│  /shorten, /urls, /<code>    │     │  Error rate detection               │
+│                              │     │  SLO burn rate analysis              │
+│  Observability API           │     │  Self-healing (auto-restart)        │
+│  /health, /metrics, /logs    │     │                                     │
+│  /slo, /incidents            │     │  Serves UI (survives app crash):    │
+│  /error-classification       │     │   • Public Status Page (/)          │
+│                              │     │   • Internal Dashboard (/dashboard) │
+│  Chaos Engineering API       │     │   • Incident Runbook (/runbook)     │
+│  /chaos/*                    │     │                                     │
+│                              │     │  Discord Alert Dispatch             │
+└──────────────────────────────┘     └─────────────────────────────────────┘
+          ▲                                        │
+          │              ┌───────────┐             │
+          └──────────────│ PostgreSQL │◄────────────┘
+                         └───────────┘
+```
 
-## uv Basics
+---
 
-`uv` manages your Python version, virtual environment, and dependencies automatically — no manual `python -m venv` needed.
+## Features
 
-| Command | What it does |
-|---------|--------------|
-| `uv sync` | Install all dependencies (creates `.venv` automatically) |
-| `uv run <script>` | Run a script using the project's virtual environment |
-| `uv add <package>` | Add a new dependency |
-| `uv remove <package>` | Remove a dependency |
+### Monitoring & Alerting
+- **Health checks** — polls `/health` every 15s, detects service downtime and recovery
+- **Error rate monitoring** — watches for 5xx spikes above 50% in a 2-minute window
+- **SLO burn rate alerting** — calculates error budget consumption rate using Google SRE's 14.4x threshold
+- **Discord webhook alerts** — sends rich embeds with role pings for Service Down, Recovery, High Error Rate, and Burn Rate Critical events
+- **Request tracing** — every request gets a unique `X-Request-ID` header for correlation
+
+### Chaos Engineering
+Inject real faults from the dashboard Chaos tab and watch the system detect and respond:
+- **Latency Injection** — adds configurable delay to all user-facing requests
+- **Error Storm** — randomly returns 500 errors at a configurable rate
+- **Database Kill** — severs the PostgreSQL connection and prevents reconnection
+- **CPU Stress** — burns CPU cycles for a configurable duration
+- **Process Kill** — sends SIGTERM to the Flask process (triggers self-healing)
+- **Traffic Generator** — generates synthetic requests so chaos effects are visible in metrics
+
+### Self-Healing
+- Detects consecutive health check failures, then automatically restarts the Flask process
+- Respects cooldown (30s) and max retry limits (5 attempts)
+- Sends Discord alerts for each remediation attempt
+- Fires a final "Self-Healing Exhausted" alert if all attempts fail
+- Logs all remediation actions to a ring buffer visible on the dashboard
+
+### Dashboard (password-protected)
+- **Overview Tab** — live status banner, CPU/RAM/response time/error rate metric rings, SLO widget (uptime, budget, burn rate), incident history, recent failures, error classification
+- **Data Tab** — top endpoints, active URLs, live JSON log feed, events table
+- **Chaos Tab** — activate/deactivate experiments, real-time chaos status bar, traffic generator, remediation log
+- All panels poll every 2s for near real-time updates
+
+### Public Status Page
+- GitHub-style 30-day uptime history bars per component (API Server, Database, URL Shortener)
+- Live operational status with uptime percentage
+- Incident timeline with detection/resolution times and duration
+- Accessible at `/` on port 5002 — stays online even when the app is down
+
+### Incident Response Runbook
+- Interactive runbook at `/dashboard/runbook` with step-by-step procedures for every alert type
+- Covers: Service Down, High Error Rate, Database Unreachable, Port Conflicts
+- Includes a log reading guide and severity classification table
+
+---
 
 ## Quick Start
 
+### Prerequisites
+- **Python 3.11+**
+- **PostgreSQL** running locally
+- **uv** — [install here](https://docs.astral.sh/uv/getting-started/installation/)
+
+### Setup
+
 ```bash
 # 1. Clone the repo
-git clone <repo-url> && cd mlh-pe-hackathon
+git clone <repo-url> && cd pe-watchtower
 
 # 2. Install dependencies
 uv sync
@@ -46,147 +100,147 @@ uv sync
 createdb hackathon_db
 
 # 4. Configure environment
-cp .env.example .env   # edit if your DB credentials differ
+cp .env.example .env
+# Edit .env with your Discord webhook URL and DB credentials
 
-# 5. Run the server
-uv run run.py
-
-# 6. Verify
-curl http://localhost:5000/health
-# → {"status":"ok"}
+# 5. Seed the database (optional)
+uv run python seed.py
 ```
+
+### Running
+
+You need **two terminals**:
+
+```bash
+# Terminal 1 — Flask app (port 5001)
+uv run python run.py
+
+# Terminal 2 — Monitor + UI (port 5002)
+uv run python monitor.py
+```
+
+### Access
+
+| What | URL |
+|------|-----|
+| API Health Check | http://localhost:5001/health |
+| Shorten a URL | `POST http://localhost:5001/shorten` with `{"url": "..."}` |
+| Public Status Page | http://localhost:5002 |
+| Internal Dashboard | http://localhost:5002/dashboard (password: `admin`) |
+| Incident Runbook | http://localhost:5002/dashboard/runbook |
+
+---
+
+## Demo Script
+
+This is the recommended sequence for demonstrating the full incident lifecycle:
+
+1. Start both processes (`run.py` + `monitor.py`)
+2. Open the dashboard at `localhost:5002/dashboard`
+3. Go to the **Chaos** tab
+4. Click **Generate Traffic** to create background load
+5. Click **Error Storm** — watch the Overview tab light up:
+   - Error rate ring spikes red
+   - SLO burn rate climbs
+   - Recent Failures fills with 500s
+   - Discord fires a High Error Rate alert
+6. Click **Kill Process** — watch self-healing kick in:
+   - Status banner goes red
+   - Discord fires Service Down alert
+   - Remediation log shows restart attempts
+   - Monitor auto-restarts Flask
+   - Discord fires Service Recovered alert
+   - Status banner goes green again
+7. Open the public status page at `localhost:5002` — it stayed online the whole time
+
+---
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DATABASE_NAME` | `hackathon_db` | PostgreSQL database name |
+| `DATABASE_HOST` | `localhost` | Database host |
+| `DATABASE_PORT` | `5432` | Database port |
+| `DATABASE_USER` | `postgres` | Database user |
+| `DATABASE_PASSWORD` | `postgres` | Database password |
+| `DISCORD_WEBHOOK_URL` | — | Discord webhook for alerts |
+| `DISCORD_ALERT_ROLE_ID` | — | Discord role ID to ping on alerts |
+| `DASHBOARD_PASSWORD` | `admin` | Dashboard login password |
+| `DASHBOARD_SECRET` | `dashboard-dev-secret-change-me` | Cookie signing secret |
+| `MONITOR_INTERVAL` | `15` | Seconds between health checks |
+| `MONITOR_PORT` | `5002` | Port for monitor UI |
+| `APP_URL` | `http://localhost:5001` | Base URL of the Flask app |
+
+---
+
+## API Reference
+
+### URL Shortener
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/shorten` | Create a short URL (`{"url": "...", "user_id": N}`) |
+| `GET` | `/<code>` | Redirect to original URL |
+| `GET` | `/urls` | List all URLs |
+| `GET` | `/urls/<id>` | Get URL details |
+| `PUT` | `/urls/<id>` | Update a URL |
+| `DELETE` | `/urls/<id>` | Delete a URL |
+
+### Observability
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/health` | Health check (pings DB) |
+| `GET` | `/metrics` | CPU, RAM, process stats |
+| `GET` | `/logs` | JSON log ring buffer |
+| `GET` | `/slo` | 24h uptime SLO stats |
+| `GET` | `/incidents` | Last 50 incidents |
+| `GET` | `/uptime-history` | 30-day per-day uptime |
+| `GET` | `/error-classification` | Categorized 500 errors |
+
+### Chaos Engineering
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/chaos/status` | Current chaos state |
+| `POST` | `/chaos/latency` | Inject latency (`{"delay_ms": 2000}`) |
+| `POST` | `/chaos/error-rate` | Inject errors (`{"rate": 0.5}`) |
+| `POST` | `/chaos/db-kill` | Kill DB connection |
+| `POST` | `/chaos/cpu-stress` | Burn CPU (`{"duration_s": 30}`) |
+| `POST` | `/chaos/crash` | Kill Flask process |
+| `POST` | `/chaos/traffic` | Generate load (`{"duration_s": 60, "rps": 5}`) |
+| `POST` | `/chaos/clear` | Stop all experiments |
+
+---
 
 ## Project Structure
 
 ```
-mlh-pe-hackathon/
+pe-watchtower/
 ├── app/
-│   ├── __init__.py          # App factory (create_app)
-│   ├── database.py          # DatabaseProxy, BaseModel, connection hooks
+│   ├── __init__.py              # App factory, request tracing, health endpoint
+│   ├── database.py              # Peewee DatabaseProxy, connection hooks
+│   ├── logging_config.py        # JSON structured logging with ring buffer
+│   ├── alerting.py              # Alert utilities
 │   ├── models/
-│   │   └── __init__.py      # Import your models here
-│   └── routes/
-│       └── __init__.py      # register_routes() — add blueprints here
-├── .env.example             # DB connection template
-├── .gitignore               # Python + uv gitignore
-├── .python-version          # Pin Python version for uv
-├── pyproject.toml           # Project metadata + dependencies
-├── run.py                   # Entry point: uv run run.py
-└── README.md
+│   │   ├── url.py               # URL model
+│   │   ├── user.py              # User model
+│   │   ├── event.py             # Event model (URL lifecycle events)
+│   │   └── incident.py          # Incident model (recorded by monitor)
+│   ├── routes/
+│   │   ├── urls.py              # URL shortener CRUD + redirect
+│   │   ├── users.py             # User management
+│   │   ├── events.py            # Event history
+│   │   ├── observability.py     # /metrics, /logs, /slo, /incidents, /error-classification
+│   │   ├── chaos.py             # Chaos engineering endpoints + middleware
+│   │   └── dashboard.py         # Dashboard blueprint (placeholder)
+│   └── templates/
+│       ├── status.html          # Public status page
+│       ├── dashboard.html       # Internal dashboard (Overview/Data/Chaos tabs)
+│       ├── login.html           # Dashboard login
+│       └── runbook.html         # Interactive incident runbook
+├── monitor.py                   # Standalone monitor process (alerting, self-healing, UI server)
+├── run.py                       # Flask app entry point
+├── seed.py                      # Database seeder
+├── RUNBOOK.md                   # Markdown incident response guide
+├── pyproject.toml               # Dependencies (managed by uv)
+└── .env.example                 # Environment variable template
 ```
-
-## How to Add a Model
-
-1. Create a file in `app/models/`, e.g. `app/models/product.py`:
-
-```python
-from peewee import CharField, DecimalField, IntegerField
-
-from app.database import BaseModel
-
-
-class Product(BaseModel):
-    name = CharField()
-    category = CharField()
-    price = DecimalField(decimal_places=2)
-    stock = IntegerField()
-```
-
-2. Import it in `app/models/__init__.py`:
-
-```python
-from app.models.product import Product
-```
-
-3. Create the table (run once in a Python shell or a setup script):
-
-```python
-from app.database import db
-from app.models.product import Product
-
-db.create_tables([Product])
-```
-
-## How to Add Routes
-
-1. Create a blueprint in `app/routes/`, e.g. `app/routes/products.py`:
-
-```python
-from flask import Blueprint, jsonify
-from playhouse.shortcuts import model_to_dict
-
-from app.models.product import Product
-
-products_bp = Blueprint("products", __name__)
-
-
-@products_bp.route("/products")
-def list_products():
-    products = Product.select()
-    return jsonify([model_to_dict(p) for p in products])
-```
-
-2. Register it in `app/routes/__init__.py`:
-
-```python
-def register_routes(app):
-    from app.routes.products import products_bp
-    app.register_blueprint(products_bp)
-```
-
-## How to Load CSV Data
-
-```python
-import csv
-from peewee import chunked
-from app.database import db
-from app.models.product import Product
-
-def load_csv(filepath):
-    with open(filepath, newline="") as f:
-        reader = csv.DictReader(f)
-        rows = list(reader)
-
-    with db.atomic():
-        for batch in chunked(rows, 100):
-            Product.insert_many(batch).execute()
-```
-
-## Useful Peewee Patterns
-
-```python
-from peewee import fn
-from playhouse.shortcuts import model_to_dict
-
-# Select all
-products = Product.select()
-
-# Filter
-cheap = Product.select().where(Product.price < 10)
-
-# Get by ID
-p = Product.get_by_id(1)
-
-# Create
-Product.create(name="Widget", category="Tools", price=9.99, stock=50)
-
-# Convert to dict (great for JSON responses)
-model_to_dict(p)
-
-# Aggregations
-avg_price = Product.select(fn.AVG(Product.price)).scalar()
-total = Product.select(fn.SUM(Product.stock)).scalar()
-
-# Group by
-from peewee import fn
-query = (Product
-         .select(Product.category, fn.COUNT(Product.id).alias("count"))
-         .group_by(Product.category))
-```
-
-## Tips
-
-- Use `model_to_dict` from `playhouse.shortcuts` to convert model instances to dictionaries for JSON responses.
-- Wrap bulk inserts in `db.atomic()` for transactional safety and performance.
-- The template uses `teardown_appcontext` for connection cleanup, so connections are closed even when requests fail.
-- Check `.env.example` for all available configuration options.
